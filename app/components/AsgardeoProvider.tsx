@@ -6,7 +6,7 @@ const config = {
     signOutRedirectURL: "http://localhost:3000",
     clientID: "m86jbtKrG3fYAfrfRN1vrfGoR00a", 
     baseUrl: "https://api.asgardeo.io/t/ajaypieris", 
-    scope: ["openid", "profile"] 
+    scope: ["openid", "profile", "groups"] 
 }
 
 export default function AsgardeoProvider({ children }: { children: React.ReactNode }) {

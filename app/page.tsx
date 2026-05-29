@@ -13,6 +13,8 @@ export default function Home() {
   useEffect(() => {
     if (state.isAuthenticated) {
       getBasicUserInfo().then((data) => {
+        console.log("🔍 User Info from Asgardeo:", data);
+        console.log("🔍 Groups:", data?.groups);
         setUserInfo(data);
       });
     }
