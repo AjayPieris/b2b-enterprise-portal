@@ -21,7 +21,10 @@ export default function Home() {
   }, [state.isAuthenticated, getBasicUserInfo]);
 
   // Check if the user has the 'Admin' role
-  const isAdmin = userInfo?.groups?.includes("Admin");
+  const roles = userInfo?.roles || userInfo?.groups || "";
+  const isAdmin = Array.isArray(roles)
+    ? roles.some((r: string) => r?.toLowerCase()?.includes("admin"))
+    : typeof roles === "string" && roles.toLowerCase().includes("admin");
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
