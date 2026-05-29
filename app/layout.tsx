@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import AsgardeoProvider from "./components/AsgardeoProvider";
+import ClientProviders from "./components/ClientProviders";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -19,9 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.className} bg-gradient-to-br from-indigo-950 via-purple-900 to-indigo-900 min-h-screen`}>
-        <AsgardeoProvider>
+        <ClientProviders>
             {children}
-        </AsgardeoProvider>
+        </ClientProviders>
       </body>
     </html>
   );
