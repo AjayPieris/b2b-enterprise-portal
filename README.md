@@ -14,41 +14,44 @@ A multi-page enterprise dashboard built with **Next.js** and secured using **WSO
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   Frontend (Next.js)                 │
-│                                                      │
-│  Landing Page ──► Dashboard ──► Profile              │
-│       │              │            └─ getBasicUserInfo()
-│       │              │                               │
-│   signIn()      Protected Pages                      │
-│       │         ┌─────────────┐                      │
-│       │         │ Team (Admin)│ ── AuthGuard          │
-│       │         │ Settings    │    requireAdmin       │
-│       │         └─────────────┘                      │
-│       │              │                               │
-│       │         getAccessToken()                     │
-│       │              │                               │
-│       ▼              ▼                               │
-│  ┌──────────────────────────────┐                    │
-│  │   API Routes (Protected)     │                    │
-│  │   /api/admin-data            │                    │
-│  │   /api/team                  │                    │
-│  │   /api/analytics             │                    │
-│  │   → Validates Bearer token   │                    │
-│  └──────────────────────────────┘                    │
-│                                                      │
-└──────────────────────┬───────────────────────────────┘
-                       │
-                       ▼
-            ┌─────────────────────┐
-            │   WSO2 Asgardeo     │
-            │                     │
-            │  • User Store       │
-            │  • Groups / Roles   │
-            │  • Token Issuer     │
-            │  • OIDC Provider    │
-            └─────────────────────┘
+```mermaid
+graph TD
+    subgraph Frontend["Frontend — Next.js App"]
+        LP["Landing Page (/)"] -->|"signIn()"| ASG
+        LP -->|"state.isAuthenticated"| DASH["Dashboard (/dashboard)"]
+        DASH --> PROFILE["Profile Page"]
+        DASH --> ANALYTICS["Analytics Page"]
+        DASH --> TEAM["Team Page 🔒 Admin"]
+        DASH --> SETTINGS["Settings Page 🔒 Admin"]
+    end
+
+    subgraph Auth["Authentication Layer"]
+        AG["AuthGuard Component"] -->|"checks groups claim"| RBAC["Role-Based Access Control"]
+        RBAC -->|"isAdmin = true"| TEAM
+        RBAC -->|"isAdmin = true"| SETTINGS
+        RBAC -->|"isAdmin = false"| DENIED["Access Denied"]
+    end
+
+    subgraph API["Protected API Routes"]
+        API1["/api/admin-data"]
+        API2["/api/team"]
+        API3["/api/analytics"]
+    end
+
+    subgraph ASG["WSO2 Asgardeo"]
+        IDP["OIDC Identity Provider"]
+        US["User Store"]
+        GR["Groups & Roles"]
+        TK["Token Issuer (JWT)"]
+    end
+
+    DASH -->|"getAccessToken()"| API1
+    DASH -->|"getAccessToken()"| API3
+    TEAM -->|"getAccessToken()"| API2
+    PROFILE -->|"getBasicUserInfo()"| US
+    API1 -->|"Validates Bearer Token"| TK
+    API2 -->|"Validates Bearer Token"| TK
+    API3 -->|"Validates Bearer Token"| TK
 ```
 
 ## Pages
