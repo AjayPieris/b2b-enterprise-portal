@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏢 B2B Enterprise Portal
+
+A multi-page enterprise dashboard built with **Next.js** and secured using **WSO2 Asgardeo** for authentication and role-based access control.
+
+## WSO2 Asgardeo Features Used
+
+| Feature | How It's Used |
+|---------|---------------|
+| **OAuth 2.0 / OIDC Authentication** | Users sign in via Asgardeo's hosted login page using Authorization Code flow with PKCE |
+| **User Profile (ID Token Claims)** | Profile page reads `username`, `email`, `sub`, `groups` from the Asgardeo ID token |
+| **Role-Based Access Control (RBAC)** | Admin-only pages (Team, Settings) are gated using the `groups` claim from Asgardeo |
+| **Protected API Routes (Bearer JWT)** | Backend API routes validate the Asgardeo-issued access token before returning data |
+| **Session Management** | AuthGuard component auto-redirects unauthenticated users to the Asgardeo login flow |
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   Frontend (Next.js)                 │
+│                                                      │
+│  Landing Page ──► Dashboard ──► Profile              │
+│       │              │            └─ getBasicUserInfo()
+│       │              │                               │
+│   signIn()      Protected Pages                      │
+│       │         ┌─────────────┐                      │
+│       │         │ Team (Admin)│ ── AuthGuard          │
+│       │         │ Settings    │    requireAdmin       │
+│       │         └─────────────┘                      │
+│       │              │                               │
+│       │         getAccessToken()                     │
+│       │              │                               │
+│       ▼              ▼                               │
+│  ┌──────────────────────────────┐                    │
+│  │   API Routes (Protected)     │                    │
+│  │   /api/admin-data            │                    │
+│  │   /api/team                  │                    │
+│  │   /api/analytics             │                    │
+│  │   → Validates Bearer token   │                    │
+│  └──────────────────────────────┘                    │
+│                                                      │
+└──────────────────────┬───────────────────────────────┘
+                       │
+                       ▼
+            ┌─────────────────────┐
+            │   WSO2 Asgardeo     │
+            │                     │
+            │  • User Store       │
+            │  • Groups / Roles   │
+            │  • Token Issuer     │
+            │  • OIDC Provider    │
+            └─────────────────────┘
+```
+
+## Pages
+
+| Route | Access | Description |
+|-------|--------|-------------|
+| `/` | Public | Landing page with Asgardeo login button |
+| `/dashboard` | Authenticated | Overview with stats from protected API |
+| `/dashboard/profile` | Authenticated | User identity from Asgardeo ID token |
+| `/dashboard/analytics` | Authenticated | Login metrics and auth method charts |
+| `/dashboard/team` | **Admin Only** | Team members table (RBAC via groups) |
+| `/dashboard/settings` | **Admin Only** | Org config showing Asgardeo settings |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- A [WSO2 Asgardeo](https://asgardeo.io/) account with a Single Page Application configured
 
+### Setup
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/b2b-enterprise-portal.git
+cd b2b-enterprise-portal
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Create a `.env` file with your Asgardeo credentials:
+```env
+NEXT_PUBLIC_ASGARDEO_SIGN_IN_REDIRECT_URL="http://localhost:3000"
+NEXT_PUBLIC_ASGARDEO_SIGN_OUT_REDIRECT_URL="http://localhost:3000"
+NEXT_PUBLIC_ASGARDEO_CLIENT_ID="your-client-id"
+NEXT_PUBLIC_ASGARDEO_BASE_URL="https://api.asgardeo.io/t/your-org"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Run the development server:
+```bash
+npm run dev
+```
 
-## Learn More
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To learn more about Next.js, take a look at the following resources:
+## Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS 4
+- **Auth:** WSO2 Asgardeo SDK (`@asgardeo/auth-react`)
+- **Auth Protocol:** OAuth 2.0 + OpenID Connect
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## RBAC Implementation
 
-## Deploy on Vercel
+Access control uses the `groups` claim returned in the Asgardeo ID token:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```typescript
+// AuthGuard checks the groups claim from Asgardeo
+const info = await getBasicUserInfo();
+const groups = info?.groups || [];
+const isAdmin = groups.some(g => g.toLowerCase().includes("admin"));
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+// If requireAdmin is true and user is not admin → Access Denied
+```
+
+To assign a user as admin, add them to an "Admin" group in the Asgardeo Console under **User Management > Groups**.
