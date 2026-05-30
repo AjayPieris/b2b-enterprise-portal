@@ -5,10 +5,11 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   
-  const { state, signIn, signOut, getBasicUserInfo } = useAuthContext();
+  const { state, signIn, signOut, getBasicUserInfo, getAccessToken } = useAuthContext();
   
   
   const [userInfo, setUserInfo] = useState<any>(null);
+  const [secureData, setSecureData] = useState<string | null>(null);
 
   useEffect(() => {
     if (state.isAuthenticated) {
@@ -19,6 +20,30 @@ export default function Home() {
       });
     }
   }, [state.isAuthenticated, getBasicUserInfo]);
+
+  const fetchSecureBillingData = async () => {
+    try {
+      // 1. Silently request the access token from WSO2 Asgardeo
+      const token = await getAccessToken();
+      
+      // 2. Attach the token to the API request
+      const response = await fetch('/api/admin-data', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        setSecureData(JSON.stringify(result.data, null, 2));
+      } else {
+        setSecureData(result.error);
+      }
+    } catch (error) {
+      console.error("Failed to fetch secure data");
+    }
+  };
 
   // Check if the user has the 'Admin' role
   const roles = userInfo?.roles || userInfo?.groups || "";
@@ -63,10 +88,18 @@ export default function Home() {
                     <button className="bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded-lg text-sm transition-colors">
                       Manage Users
                     </button>
-                    <button className="bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded-lg text-sm transition-colors">
-                      Billing Settings
+                    <button 
+                      onClick={fetchSecureBillingData}
+                      className="bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded-lg text-sm transition-colors"
+                    >
+                      Fetch Billing Settings
                     </button>
                   </div>
+                  {secureData && (
+                    <div className="mt-4 p-4 bg-black/40 rounded-lg overflow-x-auto text-xs font-mono text-purple-200">
+                      <pre>{secureData}</pre>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
