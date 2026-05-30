@@ -1,119 +1,74 @@
 "use client";
 
 import { useAuthContext } from "@asgardeo/auth-react";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default function Home() {
-  
-  const { state, signIn, signOut, getBasicUserInfo, getAccessToken } = useAuthContext();
-  
-  
-  const [userInfo, setUserInfo] = useState<any>(null);
-  const [secureData, setSecureData] = useState<string | null>(null);
+export default function LandingPage() {
+  const { state, signIn } = useAuthContext();
+  const router = useRouter();
 
+  // If user is already logged in, redirect to dashboard
   useEffect(() => {
     if (state.isAuthenticated) {
-      getBasicUserInfo().then((data) => {
-        console.log("🔍 User Info from Asgardeo:", data);
-        console.log("🔍 Groups:", data?.groups);
-        setUserInfo(data);
-      });
+      router.push("/dashboard");
     }
-  }, [state.isAuthenticated, getBasicUserInfo]);
+  }, [state.isAuthenticated, router]);
 
-  const fetchSecureBillingData = async () => {
-    try {
-      // 1. Silently request the access token from WSO2 Asgardeo
-      const token = await getAccessToken();
-      
-      // 2. Attach the token to the API request
-      const response = await fetch('/api/admin-data', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      const result = await response.json();
-      
-      if (response.ok) {
-        setSecureData(JSON.stringify(result.data, null, 2));
-      } else {
-        setSecureData(result.error);
-      }
-    } catch (error) {
-      console.error("Failed to fetch secure data");
-    }
-  };
-
-  // Check if the user has the 'Admin' role
-  const roles = userInfo?.roles || userInfo?.groups || "";
-  const isAdmin = Array.isArray(roles)
-    ? roles.some((r: string) => r?.toLowerCase()?.includes("admin"))
-    : typeof roles === "string" && roles.toLowerCase().includes("admin");
+  if (state.isLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+          <p className="text-purple-300 text-sm animate-pulse">Loading...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      
-      {/* GLASSMORPHISM CARD */}
-      <div className="w-full max-w-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl rounded-2xl p-10 text-center">
+    <main className="flex min-h-screen flex-col items-center justify-center p-8 relative overflow-hidden">
+
+    
+      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
+
+      {/* Main card */}
+      <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-10 text-center relative z-10">
+
         
-        {!state.isAuthenticated ? (
-          <>
-            <h1 className="text-4xl font-bold text-white mb-4">Enterprise Portal</h1>
-            <p className="text-purple-200 mb-8">Securely access your organization's dashboard.</p>
-            <button
-              onClick={() => signIn()}
-              className="bg-white text-purple-900 font-semibold py-3 px-8 rounded-full hover:bg-purple-100 transition-colors shadow-lg"
-            >
-              Secure Login
-            </button>
-          </>
-        ) : (
-          <>
-            <h1 className="text-3xl font-bold text-white mb-4">
-              Welcome back, {state.username}
-            </h1>
-            
-            <div className="bg-black/20 rounded-xl p-6 mb-8 text-left text-white shadow-inner flex flex-col gap-4">
-              <div>
-                <p className="text-purple-300 text-sm font-semibold uppercase tracking-wider">Your Role</p>
-                <p className="text-xl font-bold">{isAdmin ? "Organization Admin" : "Standard Employee"}</p>
-              </div>
+        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-purple-500/25">
+          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
 
-              {/* DYNAMIC UI: Only show this section if the user is an Admin */}
-              {isAdmin && (
-                <div className="mt-4 border-t border-white/20 pt-4">
-                  <p className="text-purple-300 text-sm font-semibold uppercase tracking-wider mb-2">Admin Controls</p>
-                  <div className="flex gap-4">
-                    <button className="bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded-lg text-sm transition-colors">
-                      Manage Users
-                    </button>
-                    <button 
-                      onClick={fetchSecureBillingData}
-                      className="bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded-lg text-sm transition-colors"
-                    >
-                      Fetch Billing Settings
-                    </button>
-                  </div>
-                  {secureData && (
-                    <div className="mt-4 p-4 bg-black/40 rounded-lg overflow-x-auto text-xs font-mono text-purple-200">
-                      <pre>{secureData}</pre>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+        <h1 className="text-3xl font-bold text-white mb-2">Enterprise Portal</h1>
+        <p className="text-purple-300/70 text-sm mb-8">
+          Secure B2B dashboard powered by WSO2 Asgardeo
+        </p>
 
-            <button
-              onClick={() => signOut()}
-              className="border border-white/40 text-white font-semibold py-2 px-6 rounded-full hover:bg-white/10 transition-colors"
-            >
-              Sign Out
-            </button>
-          </>
-        )}
+      
+        <button
+          onClick={() => signIn()}
+          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold py-3.5 px-8 rounded-xl hover:from-purple-500 hover:to-indigo-500 transition-all duration-300 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:-translate-y-0.5 active:translate-y-0"
+        >
+          Sign in with Asgardeo
+        </button>
 
+        {/* Security note */}
+        <div className="mt-6 flex items-center justify-center gap-2 text-purple-400/40 text-xs">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Secured with OAuth 2.0 &amp; OpenID Connect
+        </div>
       </div>
+
+      {/* Footer */}
+      <p className="mt-8 text-purple-400/30 text-xs relative z-10">
+        Identity managed by WSO2 Asgardeo
+      </p>
     </main>
   );
 }
