@@ -1,103 +1,22 @@
-/**
- * JWT Token Validation Utility
- * 
- * PURPOSE: Validates Asgardeo-issued JWT access tokens on every API request.
- * 
- * HOW IT WORKS:
- * 1. When a user logs in via Asgardeo, they receive a JWT (JSON Web Token)
- * 2. The JWT is signed by Asgardeo using RS256 (RSA + SHA-256)
- * 3. Asgardeo publishes its public keys at a JWKS (JSON Web Key Set) endpoint
- * 4. We fetch those public keys and verify the token's signature
- * 5. If the signature matches → the token is authentic (not forged)
- * 6. We also check: is the token expired? Is it from our Asgardeo org?
- * 
- * WHY THIS MATTERS:
- * Without this, anyone could send a fake "Bearer xyz" header and access your APIs.
- * With JWKS validation, only tokens genuinely issued by YOUR Asgardeo org are accepted.
- */
+// JWT Token Validation Utility
 
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
-
-// ---------------------------------------------------------------------------
-// 1) ASGARDEO CONFIGURATION
-// ---------------------------------------------------------------------------
-
-/**
- * The base URL of your Asgardeo organization.
- * Example: "https://api.asgardeo.io/t/ajaypieris"
- * This is the same URL used in your AsgardeoProvider config.
- */
+ 
 const ASGARDEO_BASE_URL = process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL!;
-
-/**
- * JWKS URI — This is where Asgardeo publishes its public signing keys.
- * 
- * JWKS stands for "JSON Web Key Set". It's a standard endpoint that returns
- * the public keys used to sign JWTs. Every OAuth 2.0 provider has one.
- * 
- * Asgardeo's JWKS endpoint follows the pattern:
- *   {baseUrl}/oauth2/jwks
- * 
- * The `jose` library will fetch these keys and cache them automatically.
- */
 const JWKS_URI = new URL(`${ASGARDEO_BASE_URL}/oauth2/jwks`);
-
-/**
- * The expected "issuer" (iss) claim in the JWT.
- * 
- * Every JWT has an "iss" field that says "who created this token".
- * We verify it matches our Asgardeo org to prevent tokens from
- * other organizations being used.
- * 
- * Asgardeo issuer format: {baseUrl}/oauth2/token
- */
 const EXPECTED_ISSUER = `${ASGARDEO_BASE_URL}/oauth2/token`;
-
-// ---------------------------------------------------------------------------
-// 2) JWKS CLIENT (Cached)
-// ---------------------------------------------------------------------------
-
-/**
- * createRemoteJWKSet creates a function that:
- * - Fetches the public keys from the JWKS URI
- * - Caches them in memory (doesn't fetch on every request)
- * - Automatically refreshes when keys rotate (key rotation is a security practice)
- * 
- * We create this ONCE at module level so it's reused across all API requests.
- */
 const jwks = createRemoteJWKSet(JWKS_URI);
 
-// ---------------------------------------------------------------------------
-// 3) TYPES
-// ---------------------------------------------------------------------------
 
-/**
- * The shape of a validated token's payload.
- * These are the "claims" inside the JWT that tell us about the user.
- */
 export interface ValidatedToken {
-  /** The user's unique identifier (subject) — e.g., "a1b2c3-d4e5-f6g7" */
+
   sub: string;
-
-  /** The user's email address */
   email?: string;
-
-  /** The user's username */
   username?: string;
-
-  /** Groups the user belongs to (used for RBAC) */
   groups?: string[];
-
-  /** Roles assigned to the user */
   roles?: string[];
-
-  /** When the token expires (Unix timestamp) */
   exp?: number;
-
-  /** When the token was issued (Unix timestamp) */
   iat?: number;
-
-  /** The full raw JWT payload for any additional claims */
   raw: JWTPayload;
 }
 
