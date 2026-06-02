@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuthContext } from "@asgardeo/auth-react";
 import { useState } from "react";
 import AuthGuard from "../../components/AuthGuard";
 
