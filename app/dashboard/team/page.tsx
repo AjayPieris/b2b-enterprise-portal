@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import AuthGuard from "../../components/AuthGuard";
 
 interface TeamMember {
-  id: number;
+  id: string | number;
   name: string;
   email: string;
   role: string;
