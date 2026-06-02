@@ -80,7 +80,7 @@ export default function Sidebar() {
         setIsAdmin(adminCheck);
       });
     }
-  }, [state.isAuthenticated]);
+  }, [state.isAuthenticated, getBasicUserInfo]);
 
   const filteredNav = navItems.filter(
     (item) => !item.adminOnly || isAdmin

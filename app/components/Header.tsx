@@ -5,13 +5,11 @@ import { useEffect, useState } from "react";
 
 export default function Header() {
   const { state, getBasicUserInfo } = useAuthContext();
-  const [userInfo, setUserInfo] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (state.isAuthenticated) {
       getBasicUserInfo().then((info) => {
-        setUserInfo(info);
         const roles = info?.groups || info?.roles || "";
         const adminCheck = Array.isArray(roles)
           ? roles.some((r: string) => r?.toLowerCase()?.includes("admin"))
@@ -19,7 +17,7 @@ export default function Header() {
         setIsAdmin(adminCheck);
       });
     }
-  }, [state.isAuthenticated]);
+  }, [state.isAuthenticated, getBasicUserInfo]);
 
   return (
     <header className="sticky top-0 z-40 h-16 bg-black/20 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-8">

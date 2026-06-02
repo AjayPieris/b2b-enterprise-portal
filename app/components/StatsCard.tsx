@@ -13,7 +13,6 @@ export default function StatsCard({
   change,
   changeType = "neutral",
   icon,
-  accentColor = "purple",
 }: StatsCardProps) {
   const changeColors = {
     up: "text-emerald-400",

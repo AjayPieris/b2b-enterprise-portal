@@ -5,7 +5,6 @@ import { useState } from "react";
 import AuthGuard from "../../components/AuthGuard";
 
 function SettingsContent() {
-  const { state } = useAuthContext();
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {

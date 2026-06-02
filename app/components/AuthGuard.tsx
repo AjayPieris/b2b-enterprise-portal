@@ -31,7 +31,7 @@ export default function AuthGuard({ children, requireAdmin = false }: AuthGuardP
         setIsLoading(false);
       });
     }
-  }, [state.isAuthenticated, state.isLoading]);
+  }, [state.isAuthenticated, state.isLoading, signIn, getBasicUserInfo]);
 
   if (state.isLoading || isLoading) {
     return (

@@ -4,18 +4,16 @@ import { useAuthContext } from "@asgardeo/auth-react";
 import { useEffect, useState } from "react";
 
 export default function ProfilePage() {
-  const { state, getBasicUserInfo, getAccessToken } = useAuthContext();
-  const [userInfo, setUserInfo] = useState<any>(null);
+  const { state, getBasicUserInfo } = useAuthContext();
+  const [userInfo, setUserInfo] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadProfile() {
       try {
-        // getBasicUserInfo() reads claims from the Asgardeo ID token
-        // This includes username, email, groups, roles, sub (unique user ID)
         const info = await getBasicUserInfo();
         console.log("Asgardeo user profile:", info);
-        setUserInfo(info);
+        setUserInfo(info as Record<string, unknown>);
       } catch (error) {
         console.error("Failed to load profile:", error);
       } finally {
@@ -37,11 +35,10 @@ export default function ProfilePage() {
   }
 
   // Extract user data from the Asgardeo ID token claims
-  const username = userInfo?.username || state.username || "Unknown";
-  const email = userInfo?.email || userInfo?.sub || "—";
+  const username = (userInfo?.username as string) || state.username || "Unknown";
+  const email = (userInfo?.email as string) || (userInfo?.sub as string) || "—";
   const groups = userInfo?.groups || [];
-  const roles = userInfo?.roles || [];
-  const sub = userInfo?.sub || "—";
+  const sub = (userInfo?.sub as string) || "—";
 
   // Build initials from username
   const initials = username.substring(0, 2).toUpperCase();

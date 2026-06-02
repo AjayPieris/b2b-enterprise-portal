@@ -6,7 +6,7 @@ import StatsCard from "../components/StatsCard";
 
 export default function DashboardOverview() {
   const { getAccessToken } = useAuthContext();
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<Record<string, string | number> | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch enterprise data from our protected API using Asgardeo access token

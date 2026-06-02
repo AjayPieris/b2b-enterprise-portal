@@ -3,9 +3,20 @@
 import { useAuthContext } from "@asgardeo/auth-react";
 import { useEffect, useState } from "react";
 
+interface AnalyticsData {
+  monthlyLogins: { month: string; count: number }[];
+  authMethods: { method: string; percentage: number }[];
+  summary: {
+    totalLogins: string;
+    avgSessionTime: string;
+    failedAttempts: string;
+    mfaAdoption: string;
+  };
+}
+
 export default function AnalyticsPage() {
   const { getAccessToken } = useAuthContext();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,7 +50,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const maxCount = Math.max(...(data?.monthlyLogins?.map((m: any) => m.count) || [1]));
+  const maxCount = Math.max(...(data?.monthlyLogins?.map((m) => m.count) || [1]));
 
   return (
     <div className="space-y-8">
@@ -71,7 +82,7 @@ export default function AnalyticsPage() {
       <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
         <h2 className="text-lg font-semibold text-white mb-6">Monthly Logins</h2>
         <div className="flex items-end gap-4 h-48">
-          {data?.monthlyLogins?.map((month: any, i: number) => {
+          {data?.monthlyLogins?.map((month, i: number) => {
             const height = (month.count / maxCount) * 100;
             return (
               <div key={i} className="flex-1 flex flex-col items-center gap-2">
@@ -93,7 +104,7 @@ export default function AnalyticsPage() {
       <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
         <h2 className="text-lg font-semibold text-white mb-6">Authentication Methods</h2>
         <div className="space-y-5">
-          {data?.authMethods?.map((method: any, i: number) => (
+          {data?.authMethods?.map((method, i: number) => (
             <div key={i}>
               <div className="flex justify-between mb-2">
                 <span className="text-sm text-purple-200/80">{method.method}</span>
@@ -116,3 +127,4 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
