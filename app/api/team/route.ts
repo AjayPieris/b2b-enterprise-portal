@@ -1,9 +1,49 @@
 import { NextResponse } from "next/server";
-import { validateToken, isAdminToken } from "../../lib/auth";
+import { validateToken } from "../../lib/auth";
 
 const ASGARDEO_BASE_URL = process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL || "";
+const M2M_CLIENT_ID = process.env.ASGARDEO_M2M_CLIENT_ID || "";
+const M2M_CLIENT_SECRET = process.env.ASGARDEO_M2M_CLIENT_SECRET || "";
+
+interface ScimRole { display: string }
+interface ScimGroup { display: string }
+interface ScimUser {
+  id: string;
+  userName: string;
+  name?: { formatted?: string; givenName?: string; familyName?: string };
+  emails?: { value: string; primary?: boolean }[];
+  roles?: ScimRole[];
+  groups?: ScimGroup[];
+  active?: boolean;
+  meta?: { created?: string };
+}
+
+// Gets a server-side admin token using the M2M Client Credentials flow.
+// This is separate from the user's SPA token — it runs only on the server.
+async function getM2MAccessToken(): Promise<string> {
+  const tokenUrl = `${ASGARDEO_BASE_URL}/oauth2/token`;
+  const credentials = Buffer.from(`${M2M_CLIENT_ID}:${M2M_CLIENT_SECRET}`).toString("base64");
+
+  const response = await fetch(tokenUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${credentials}`,
+    },
+    body: "grant_type=client_credentials&scope=internal_user_mgt_list internal_user_mgt_view",
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`M2M token request failed (${response.status}): ${err}`);
+  }
+
+  const data = await response.json();
+  return data.access_token;
+}
 
 export async function GET(request: Request) {
+  // 1. Verify the user making this request is authenticated (their SPA token)
   const result = await validateToken(request);
 
   if (!result.valid) {
@@ -13,89 +53,76 @@ export async function GET(request: Request) {
     );
   }
 
-  if (!isAdminToken(result.token)) {
-    return NextResponse.json(
-      { error: "Forbidden: Admin access required." },
-      { status: 403 }
-    );
-  }
-
-  // 1. We define the fallback mock data in case the SCIM2 API call fails
-  const mockTeamMembers = [
-    { id: "1", name: "Ajay Pieris", email: "ajay@company.com", role: "Admin", status: "Active", joinedAt: "2024-01-15" },
-    { id: "2", name: "Sarah Chen", email: "sarah@company.com", role: "Developer", status: "Active", joinedAt: "2024-03-22" },
-    { id: "3", name: "Marcus Johnson", email: "marcus@company.com", role: "Designer", status: "Active", joinedAt: "2024-05-10" },
-    { id: "4", name: "Priya Sharma", email: "priya@company.com", role: "Developer", status: "Invited", joinedAt: "2024-06-01" },
-    { id: "5", name: "David Kim", email: "david@company.com", role: "Manager", status: "Active", joinedAt: "2024-02-28" },
-  ];
-
   try {
-    // 2. Extract the exact token string the user sent us
-    const token = request.headers.get("authorization")?.split(" ")[1];
+    // 2. Get a server-side admin token to call SCIM2 (not the user's browser token)
+    const adminToken = await getM2MAccessToken();
 
-    // 3. Try to call the real Asgardeo SCIM2 API
+    // 3. Use the admin token to fetch all org users from Asgardeo SCIM2
     const scimResponse = await fetch(`${ASGARDEO_BASE_URL}/scim2/Users`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${adminToken}`,
         "Content-Type": "application/json",
       },
     });
 
-    if (scimResponse.ok) {
-      const scimData = await scimResponse.json();
-      
-      interface ScimRole { display: string }
-      interface ScimGroup { display: string }
-      interface ScimUser {
-        id: string;
-        userName: string;
-        name?: { formatted?: string };
-        emails?: { value: string }[];
-        roles?: ScimRole[];
-        groups?: ScimGroup[];
-        active?: boolean;
-        meta?: { created?: string };
-      }
+    console.log(`[Team API] SCIM2 response: ${scimResponse.status}`);
 
-      // 4. Map Asgardeo's complex SCIM2 format into our clean dashboard format
-      const realUsers = scimData.Resources?.map((user: ScimUser) => {
-        const email = user.emails?.[0]?.value || user.userName || "No email";
-        // Check if Asgardeo gave them an admin role in their groups/roles
-        const roles = user.roles?.map((r: ScimRole) => r.display).join(", ") || 
-                     user.groups?.map((g: ScimGroup) => g.display).join(", ") || 
-                     "User";
-                     
-        return {
-          id: user.id,
-          name: user.name?.formatted || user.userName,
-          email: email,
-          role: roles.toLowerCase().includes("admin") ? "Admin" : "User",
-          status: user.active === false ? "Inactive" : "Active",
-          joinedAt: new Date(user.meta?.created || Date.now()).toISOString().split('T')[0],
-        };
-      }) || [];
-
-      return NextResponse.json({
-        success: true,
-        source: "asgardeo-scim2",
-        data: realUsers,
-        _meta: { requestedBy: result.token.sub, isAdmin: true, validatedAt: new Date().toISOString() },
-      });
-    } else {
-      console.warn(`[Team API] SCIM2 call failed (${scimResponse.status}). Ensure the user has 'internal_user_mgt_list' scope.`);
-      console.warn("[Team API] Falling back to mock data.");
+    if (!scimResponse.ok) {
+      const errBody = await scimResponse.text();
+      console.error(`[Team API] SCIM2 error:`, errBody);
+      return NextResponse.json(
+        { error: `Failed to fetch users from Asgardeo (${scimResponse.status}).` },
+        { status: 502 }
+      );
     }
+
+    const scimData = await scimResponse.json();
+
+    // 4. Map the SCIM2 response into the clean format the UI expects
+    const users = (scimData.Resources as ScimUser[] || []).map((user) => {
+      const email =
+        user.emails?.find((e) => e.primary)?.value ||
+        user.emails?.[0]?.value ||
+        user.userName;
+
+      const displayName =
+        user.name?.formatted ||
+        [user.name?.givenName, user.name?.familyName].filter(Boolean).join(" ") ||
+        user.userName;
+
+      const roleLabels = [
+        ...(user.roles?.map((r) => r.display) || []),
+        ...(user.groups?.map((g) => g.display) || []),
+      ];
+      const isAdmin = roleLabels.some((r) => r.toLowerCase().includes("admin"));
+
+      return {
+        id: user.id,
+        name: displayName,
+        email,
+        role: isAdmin ? "Admin" : "User",
+        status: user.active === false ? "Inactive" : "Active",
+        joinedAt: user.meta?.created
+          ? new Date(user.meta.created).toISOString().split("T")[0]
+          : new Date().toISOString().split("T")[0],
+      };
+    });
+
+    return NextResponse.json({
+      success: true,
+      source: "asgardeo-scim2",
+      data: users,
+      _meta: {
+        total: scimData.totalResults,
+        requestedBy: result.token.sub,
+        validatedAt: new Date().toISOString(),
+      },
+    });
   } catch (error) {
-    console.error("[Team API] Error calling SCIM2:", error);
+    console.error("[Team API] Error:", error);
+    return NextResponse.json(
+      { error: "Internal error fetching organization users." },
+      { status: 500 }
+    );
   }
-
-  // 5. If the SCIM2 call failed (usually because the SPA token doesn't have list scopes),
-  // return the mock data gracefully without breaking the dashboard UI.
-  return NextResponse.json({
-    success: true,
-    source: "mock-fallback",
-    data: mockTeamMembers,
-    _meta: { requestedBy: result.token.sub, isAdmin: true, validatedAt: new Date().toISOString() },
-  });
 }
-

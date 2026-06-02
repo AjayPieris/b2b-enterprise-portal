@@ -17,11 +17,11 @@ function TeamContent() {
   const { getAccessToken } = useAuthContext();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchTeam() {
       try {
-        // Get the Asgardeo access token and send it to our protected API
         const token = await getAccessToken();
 
         const response = await fetch("/api/team", {
@@ -31,9 +31,13 @@ function TeamContent() {
         if (response.ok) {
           const result = await response.json();
           setMembers(result.data);
+        } else {
+          const errData = await response.json().catch(() => null);
+          setErrorMsg(errData?.error || `HTTP ${response.status}: Failed to fetch team data`);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch team:", error);
+        setErrorMsg(error.message || "An unexpected error occurred.");
       } finally {
         setLoading(false);
       }
@@ -63,6 +67,12 @@ function TeamContent() {
           🔒 Admin Only
         </span>
       </div>
+
+      {errorMsg && (
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm font-medium">
+          {errorMsg}
+        </div>
+      )}
 
       {/* Team table */}
       <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden">

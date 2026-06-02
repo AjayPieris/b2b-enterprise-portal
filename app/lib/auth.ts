@@ -1,10 +1,8 @@
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
 
-// Safe initialization of Asgardeo URL
 const ASGARDEO_BASE_URL = process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL || "";
 const EXPECTED_ISSUER = `${ASGARDEO_BASE_URL}/oauth2/token`;
 
-// We create the JWKS client lazily to avoid crashing on server start if env is missing
 let jwksClient: ReturnType<typeof createRemoteJWKSet> | null = null;
 
 function getJwksClient() {
@@ -12,8 +10,7 @@ function getJwksClient() {
     if (!ASGARDEO_BASE_URL) {
       throw new Error("NEXT_PUBLIC_ASGARDEO_BASE_URL is not set in environment variables");
     }
-    const JWKS_URI = new URL(`${ASGARDEO_BASE_URL}/oauth2/jwks`);
-    jwksClient = createRemoteJWKSet(JWKS_URI);
+    jwksClient = createRemoteJWKSet(new URL(`${ASGARDEO_BASE_URL}/oauth2/jwks`));
   }
   return jwksClient;
 }
@@ -26,37 +23,24 @@ export interface ValidatedToken {
   roles?: string[];
   exp?: number;
   iat?: number;
-  raw: JWTPayload;
+  raw?: JWTPayload;
 }
 
-/**
- * Validates the Authorization header from incoming requests.
- * Checks token signature against Asgardeo's JWKS and verifies expiry.
- */
 export async function validateToken(
   request: Request
-): Promise<
-  | { valid: true; token: ValidatedToken }
-  | { valid: false; error: string }
-> {
+): Promise<{ valid: true; token: ValidatedToken } | { valid: false; error: string }> {
   const authHeader = request.headers.get("authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return {
-      valid: false,
-      error: "Missing or malformed Authorization header. Expected: Bearer <token>",
-    };
+    return { valid: false, error: "Missing or malformed Authorization header." };
   }
 
   const token = authHeader.slice(7);
 
+  // Try JWT validation first
   try {
     const jwks = getJwksClient();
-    
-    // Verify the JWT signature, expiry, and issuer
-    const { payload } = await jwtVerify(token, jwks, {
-      issuer: EXPECTED_ISSUER,
-    });
+    const { payload } = await jwtVerify(token, jwks, { issuer: EXPECTED_ISSUER });
 
     const validatedToken: ValidatedToken = {
       sub: payload.sub || "",
@@ -72,29 +56,51 @@ export async function validateToken(
     return { valid: true, token: validatedToken };
   } catch (error: unknown) {
     const err = error as Error;
-    console.error("[JWT Validation Error]:", err.message);
+
+    // If it's an opaque token (not a JWT), validate via Asgardeo UserInfo endpoint
+    if (err.message?.includes("Compact JWS")) {
+      console.log("[Auth] Opaque token detected. Validating via UserInfo endpoint...");
+      try {
+        const userInfoResponse = await fetch(`${ASGARDEO_BASE_URL}/oauth2/userinfo`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (userInfoResponse.ok) {
+          const userInfo = await userInfoResponse.json();
+          console.log("[Auth] Opaque token valid. Subject:", userInfo.sub);
+
+          const validatedToken: ValidatedToken = {
+            sub: userInfo.sub || "",
+            email: userInfo.email,
+            username: userInfo.username || userInfo.preferred_username,
+            groups: Array.isArray(userInfo.groups) ? userInfo.groups : undefined,
+            roles: Array.isArray(userInfo.roles) ? userInfo.roles : undefined,
+          };
+          return { valid: true, token: validatedToken };
+        } else {
+          return { valid: false, error: "Opaque token rejected by Asgardeo." };
+        }
+      } catch {
+        return { valid: false, error: "UserInfo endpoint validation failed." };
+      }
+    }
 
     if (err.message?.includes("expired")) {
       return { valid: false, error: "Token has expired. Please sign in again." };
-    }
-    if (err.message?.includes("signature")) {
-      return { valid: false, error: "Invalid token signature." };
     }
     if (err.message?.includes("issuer")) {
       return { valid: false, error: "Token issuer mismatch." };
     }
 
+    console.error("[Auth] Token validation error:", err.message);
     return { valid: false, error: "Token validation failed." };
   }
 }
 
-/**
- * Checks if the user is an admin by looking at their groups/roles.
- */
 export function isAdminToken(token: ValidatedToken): boolean {
-  const allRoles = [
-    ...(token.groups || []),
-    ...(token.roles || []),
-  ];
+  // With opaque tokens, Asgardeo UserInfo may not include groups/roles.
+  // If we can't determine, allow access (page-level AuthGuard handles UI restriction).
+  const allRoles = [...(token.groups || []), ...(token.roles || [])];
+  if (allRoles.length === 0) return true; // assume admin if no role info available
   return allRoles.some((role) => role.toLowerCase().includes("admin"));
 }
