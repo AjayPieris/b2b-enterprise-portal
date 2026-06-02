@@ -57,6 +57,19 @@ const severityConfig = {
   critical: { label: "Critical", color: "bg-red-500/15 text-red-400 border-red-500/20", icon: "🚨" },
 };
 
+// ── Format timestamp to human-readable relative time ────────────────────
+function formatTime(timestamp: string): string {
+  const diff = Date.now() - new Date(timestamp).getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${days}d ago`;
+}
+
 export default function AuditLogsPage() {
   const { getAccessToken } = useAuthContext();
   const [events, setEvents] = useState<AuditEvent[]>([]);
@@ -100,19 +113,6 @@ export default function AuditLogsPage() {
 
     fetchAuditLogs();
   }, [getAccessToken, typeFilter, severityFilter]); // Re-fetch when filters change
-
-  // ── Format timestamp to human-readable relative time ────────────────────
-  function formatTime(timestamp: string): string {
-    const diff = Date.now() - new Date(timestamp).getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return "Just now";
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  }
 
   // ── Loading state ───────────────────────────────────────────────────────
   if (loading) {

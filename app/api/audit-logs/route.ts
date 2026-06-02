@@ -1,27 +1,6 @@
-/**
- * Audit Logs API Route
- * 
- * ENDPOINT: GET /api/audit-logs
- * PURPOSE: Returns a filterable list of security/auth events for compliance
- * AUTH: Requires a valid Asgardeo JWT token
- * 
- * QUERY PARAMS:
- *   ?type=auth|admin|system|security  — Filter by event type
- *   ?severity=info|warning|critical   — Filter by severity
- *   ?limit=20                         — Number of events to return
- * 
- * WHY AUDIT LOGS MATTER:
- * Every enterprise needs an audit trail for compliance (SOC2, ISO 27001, GDPR).
- * This records WHO did WHAT, WHEN, and from WHERE.
- * 
- * In production, you'd write events to a database and query them here.
- * For now, we generate realistic events based on the authenticated user.
- */
-
 import { NextResponse } from "next/server";
 import { validateToken } from "../../lib/auth";
 
-// ── Types ─────────────────────────────────────────────────────────────────
 interface AuditEvent {
   id: string;
   timestamp: string;
@@ -34,17 +13,15 @@ interface AuditEvent {
   details: string;
 }
 
-// ── Helper: Generate realistic audit events ───────────────────────────────
 function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
   const now = Date.now();
   const HOUR = 3600000;
   const DAY = 86400000;
 
-  // These simulate real events that would be logged in an enterprise system
   return [
     {
       id: "evt_001",
-      timestamp: new Date(now - 2 * 60000).toISOString(),         // 2 min ago
+      timestamp: new Date(now - 2 * 60000).toISOString(),
       type: "auth",
       severity: "info",
       action: "user.login.success",
@@ -55,7 +32,7 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
     },
     {
       id: "evt_002",
-      timestamp: new Date(now - 15 * 60000).toISOString(),        // 15 min ago
+      timestamp: new Date(now - 15 * 60000).toISOString(),
       type: "admin",
       severity: "info",
       action: "admin.data.access",
@@ -66,7 +43,7 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
     },
     {
       id: "evt_003",
-      timestamp: new Date(now - 42 * 60000).toISOString(),        // 42 min ago
+      timestamp: new Date(now - 42 * 60000).toISOString(),
       type: "security",
       severity: "warning",
       action: "user.login.failed",
@@ -77,7 +54,7 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
     },
     {
       id: "evt_004",
-      timestamp: new Date(now - 1.5 * HOUR).toISOString(),        // 1.5 hours ago
+      timestamp: new Date(now - 1.5 * HOUR).toISOString(),
       type: "admin",
       severity: "info",
       action: "user.role.updated",
@@ -88,7 +65,7 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
     },
     {
       id: "evt_005",
-      timestamp: new Date(now - 3 * HOUR).toISOString(),          // 3 hours ago
+      timestamp: new Date(now - 3 * HOUR).toISOString(),
       type: "security",
       severity: "critical",
       action: "user.login.brute_force",
@@ -99,7 +76,7 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
     },
     {
       id: "evt_006",
-      timestamp: new Date(now - 5 * HOUR).toISOString(),          // 5 hours ago
+      timestamp: new Date(now - 5 * HOUR).toISOString(),
       type: "system",
       severity: "info",
       action: "token.jwks.refresh",
@@ -110,7 +87,7 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
     },
     {
       id: "evt_007",
-      timestamp: new Date(now - 8 * HOUR).toISOString(),          // 8 hours ago
+      timestamp: new Date(now - 8 * HOUR).toISOString(),
       type: "auth",
       severity: "info",
       action: "user.logout",
@@ -121,7 +98,7 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
     },
     {
       id: "evt_008",
-      timestamp: new Date(now - 12 * HOUR).toISOString(),         // 12 hours ago
+      timestamp: new Date(now - 12 * HOUR).toISOString(),
       type: "admin",
       severity: "warning",
       action: "api.rate_limit.exceeded",
@@ -132,7 +109,7 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
     },
     {
       id: "evt_009",
-      timestamp: new Date(now - 1 * DAY).toISOString(),           // 1 day ago
+      timestamp: new Date(now - 1 * DAY).toISOString(),
       type: "auth",
       severity: "info",
       action: "user.mfa.enrolled",
@@ -143,7 +120,7 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
     },
     {
       id: "evt_010",
-      timestamp: new Date(now - 1.5 * DAY).toISOString(),         // 1.5 days ago
+      timestamp: new Date(now - 1.5 * DAY).toISOString(),
       type: "security",
       severity: "warning",
       action: "user.login.new_device",
@@ -154,7 +131,7 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
     },
     {
       id: "evt_011",
-      timestamp: new Date(now - 2 * DAY).toISOString(),           // 2 days ago
+      timestamp: new Date(now - 2 * DAY).toISOString(),
       type: "system",
       severity: "info",
       action: "system.backup.completed",
@@ -165,7 +142,7 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
     },
     {
       id: "evt_012",
-      timestamp: new Date(now - 3 * DAY).toISOString(),           // 3 days ago
+      timestamp: new Date(now - 3 * DAY).toISOString(),
       type: "admin",
       severity: "info",
       action: "org.member.invited",
@@ -177,7 +154,6 @@ function generateAuditEvents(authenticatedUser: string): AuditEvent[] {
   ];
 }
 
-// ── Route Handler ─────────────────────────────────────────────────────────
 export async function GET(request: Request) {
   const result = await validateToken(request);
 
@@ -188,16 +164,13 @@ export async function GET(request: Request) {
     );
   }
 
-  // Parse query parameters for filtering
   const url = new URL(request.url);
-  const typeFilter = url.searchParams.get("type");       // auth, admin, system, security
-  const severityFilter = url.searchParams.get("severity"); // info, warning, critical
+  const typeFilter = url.searchParams.get("type");
+  const severityFilter = url.searchParams.get("severity");
   const limit = parseInt(url.searchParams.get("limit") || "50", 10);
 
-  // Generate events with the authenticated user's identity
   let events = generateAuditEvents(result.token.sub || result.token.username || "unknown");
 
-  // Apply filters
   if (typeFilter) {
     events = events.filter((e) => e.type === typeFilter);
   }
@@ -205,10 +178,8 @@ export async function GET(request: Request) {
     events = events.filter((e) => e.severity === severityFilter);
   }
 
-  // Apply limit
   events = events.slice(0, limit);
 
-  // Compute summary statistics
   const allEvents = generateAuditEvents(result.token.sub || "");
   const summary = {
     total: allEvents.length,
@@ -236,3 +207,4 @@ export async function GET(request: Request) {
     },
   });
 }
+
