@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server";
 import { validateToken } from "../../lib/auth";
-
-interface AuditEvent {
-  id: string;
-  timestamp: string;
-  type: "auth" | "admin" | "system" | "security";
-  severity: "info" | "warning" | "critical";
-  action: string;
-  actor: string;
-  ip: string;
-  userAgent: string;
-  details: string;
-}
+import { evaluateRules } from "../../lib/alertRules";
+import { addAlert } from "../../lib/alertStore";
+import type { AuditEvent } from "../../lib/auditTypes";
 
 export const globalAuditLogs: AuditEvent[] = [];
+
+function pushEvent(event: AuditEvent) {
+  globalAuditLogs.push(event);
+
+  // run the event through the alert rules engine
+  const triggered = evaluateRules(event, globalAuditLogs);
+  triggered.forEach(addAlert);
+}
 
 export async function GET(request: Request) {
   const result = await validateToken(request);
@@ -30,8 +29,7 @@ export async function GET(request: Request) {
   const severityFilter = url.searchParams.get("severity");
   const limit = parseInt(url.searchParams.get("limit") || "50", 10);
 
-  // Instead of mock data, log this actual real-time access to the audit logs itself!
-  globalAuditLogs.push({
+  pushEvent({
     id: `evt_${Date.now()}`,
     timestamp: new Date().toISOString(),
     type: "admin",
@@ -43,9 +41,8 @@ export async function GET(request: Request) {
     details: `User viewed audit logs with filters: type=${typeFilter}, severity=${severityFilter}`,
   });
 
-  // Also seed with an initial login event for the current user if the log is too empty
-  if (globalAuditLogs.filter(e => e.type === "auth").length === 0) {
-    globalAuditLogs.push({
+  if (globalAuditLogs.filter((e) => e.type === "auth").length === 0) {
+    pushEvent({
       id: `evt_seed_${Date.now()}`,
       timestamp: new Date(Date.now() - 5000).toISOString(),
       type: "auth",
@@ -58,15 +55,12 @@ export async function GET(request: Request) {
     });
   }
 
-  // Sort logs latest first
-  let events = [...globalAuditLogs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  let events = [...globalAuditLogs].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
 
-  if (typeFilter) {
-    events = events.filter((e) => e.type === typeFilter);
-  }
-  if (severityFilter) {
-    events = events.filter((e) => e.severity === severityFilter);
-  }
+  if (typeFilter) events = events.filter((e) => e.type === typeFilter);
+  if (severityFilter) events = events.filter((e) => e.severity === severityFilter);
 
   events = events.slice(0, limit);
 
@@ -96,4 +90,3 @@ export async function GET(request: Request) {
     },
   });
 }
-
