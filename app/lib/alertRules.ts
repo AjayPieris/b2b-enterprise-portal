@@ -1,6 +1,7 @@
 import type { AuditEvent } from "./auditTypes";
 
 export type AlertSeverity = "low" | "medium" | "high" | "critical";
+export type AlertActionType = "login_failure" | "generic";
 
 export interface TriggeredAlert {
   id: string;
@@ -13,6 +14,11 @@ export interface TriggeredAlert {
   triggeredAt: string;
   read: boolean;
   relatedEventId: string;
+  // ── Action-capable fields ────────────────────────────────────────────────
+  actionType?: AlertActionType;   // determines which action buttons to show
+  subjectUser?: string;           // username of the user who triggered the alert
+  resolved?: boolean;             // true once admin has taken action
+  resolvedAction?: "deleted" | "allowed" | "dismissed"; // what the admin did
 }
 
 interface AlertRule {
@@ -21,6 +27,7 @@ interface AlertRule {
   description: string;
   severity: AlertSeverity;
   enabled: boolean;
+  actionType?: AlertActionType;
   evaluate: (event: AuditEvent, history: AuditEvent[]) => string | null;
 }
 
@@ -47,6 +54,7 @@ export const ALERT_RULES: AlertRule[] = [
     description: "3+ failed logins from the same actor within 2 minutes",
     severity: "high",
     enabled: true,
+    actionType: "login_failure",
     evaluate(event, history) {
       if (event.action !== "user.login.failed") return null;
 
@@ -60,6 +68,19 @@ export const ALERT_RULES: AlertRule[] = [
         return `Brute force suspected: ${event.actor} failed login ${count} times in 2 minutes (IP: ${event.ip}).`;
       }
       return null;
+    },
+  },
+
+  {
+    id: "rule_single_login_failure",
+    name: "Login Failure Detected",
+    description: "A user login attempt failed",
+    severity: "medium",
+    enabled: true,
+    actionType: "login_failure",
+    evaluate(event) {
+      if (event.action !== "user.login.failed") return null;
+      return `Failed login attempt for ${event.actor} from IP ${event.ip}.`;
     },
   },
 
@@ -162,6 +183,10 @@ export function evaluateRules(
         triggeredAt: new Date().toISOString(),
         read: false,
         relatedEventId: event.id,
+        // carry action metadata when the rule declares it
+        actionType: rule.actionType,
+        subjectUser: rule.actionType === "login_failure" ? event.actor : undefined,
+        resolved: false,
       });
     }
   }

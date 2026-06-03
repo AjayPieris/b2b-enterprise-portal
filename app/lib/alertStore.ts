@@ -24,7 +24,7 @@ export function getAlerts(): TriggeredAlert[] {
 }
 
 export function getUnreadCount(): number {
-  return alerts.filter((a) => !a.read).length;
+  return alerts.filter((a) => !a.read && !a.resolved).length;
 }
 
 export function markAllAsRead() {
@@ -34,4 +34,16 @@ export function markAllAsRead() {
 export function markAsRead(alertId: string) {
   const alert = alerts.find((a) => a.id === alertId);
   if (alert) alert.read = true;
+}
+
+export function resolveAlert(
+  alertId: string,
+  action: "deleted" | "allowed" | "dismissed"
+) {
+  const alert = alerts.find((a) => a.id === alertId);
+  if (alert) {
+    alert.resolved = true;
+    alert.read = true;
+    alert.resolvedAction = action;
+  }
 }
