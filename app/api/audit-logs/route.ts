@@ -2,19 +2,31 @@ import { NextResponse } from "next/server";
 import { validateToken } from "../../lib/auth";
 import { evaluateRules } from "../../lib/alertRules";
 import { addAlert } from "../../lib/alertStore";
+import { generateSeedAuditEvents, seedAlerts } from "../../lib/mockSeed";
 import type { AuditEvent } from "../../lib/auditTypes";
 
 export const globalAuditLogs: AuditEvent[] = [];
 
+// Seed realistic data on first server boot so the dashboard isn't empty
+let seeded = false;
+function ensureSeeded() {
+  if (seeded) return;
+  seeded = true;
+
+  const seedEvents = generateSeedAuditEvents();
+  globalAuditLogs.push(...seedEvents);
+  seedAlerts(seedEvents);
+}
+
 function pushEvent(event: AuditEvent) {
   globalAuditLogs.push(event);
-
-  // run the event through the alert rules engine
   const triggered = evaluateRules(event, globalAuditLogs);
   triggered.forEach(addAlert);
 }
 
 export async function GET(request: Request) {
+  ensureSeeded();
+
   const result = await validateToken(request);
 
   if (!result.valid) {
@@ -40,20 +52,6 @@ export async function GET(request: Request) {
     userAgent: request.headers.get("user-agent") || "Unknown",
     details: `User viewed audit logs with filters: type=${typeFilter}, severity=${severityFilter}`,
   });
-
-  if (globalAuditLogs.filter((e) => e.type === "auth").length === 0) {
-    pushEvent({
-      id: `evt_seed_${Date.now()}`,
-      timestamp: new Date(Date.now() - 5000).toISOString(),
-      type: "auth",
-      severity: "info",
-      action: "user.login.success",
-      actor: result.token.sub || result.token.email || "Admin",
-      ip: request.headers.get("x-forwarded-for") || "127.0.0.1",
-      userAgent: request.headers.get("user-agent") || "Unknown",
-      details: "User authenticated securely via Asgardeo.",
-    });
-  }
 
   let events = [...globalAuditLogs].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
