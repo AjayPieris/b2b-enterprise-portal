@@ -14,11 +14,10 @@ export interface TriggeredAlert {
   triggeredAt: string;
   read: boolean;
   relatedEventId: string;
-  // ── Action-capable fields ────────────────────────────────────────────────
-  actionType?: AlertActionType;   // determines which action buttons to show
-  subjectUser?: string;           // username of the user who triggered the alert
-  resolved?: boolean;             // true once admin has taken action
-  resolvedAction?: "deleted" | "allowed" | "dismissed"; // what the admin did
+  actionType?: AlertActionType;
+  subjectUser?: string;
+  resolved?: boolean;
+  resolvedAction?: "deleted" | "allowed" | "dismissed";
 }
 
 interface AlertRule {
@@ -183,7 +182,6 @@ export function evaluateRules(
         triggeredAt: new Date().toISOString(),
         read: false,
         relatedEventId: event.id,
-        // carry action metadata when the rule declares it
         actionType: rule.actionType,
         subjectUser: rule.actionType === "login_failure" ? event.actor : undefined,
         resolved: false,

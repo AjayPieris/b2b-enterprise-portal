@@ -7,11 +7,10 @@ import type { AuditEvent } from "../../../lib/auditTypes";
 
 const WEBHOOK_SECRET = process.env.ASGARDEO_WEBHOOK_SECRET || "";
 
-// Verify the HMAC-SHA256 signature Asgardeo sends in x-hub-signature-256
 function verifySignature(rawBody: string, signatureHeader: string): boolean {
   if (!WEBHOOK_SECRET || WEBHOOK_SECRET === "your-webhook-secret-here") {
     console.warn("[Webhook] ASGARDEO_WEBHOOK_SECRET not set — skipping signature check");
-    return true; // allow through in dev until the secret is configured
+    return true;
   }
 
   const expected = `sha256=${createHmac("sha256", WEBHOOK_SECRET).update(rawBody).digest("hex")}`;
@@ -23,7 +22,6 @@ function verifySignature(rawBody: string, signatureHeader: string): boolean {
   }
 }
 
-// Map Asgardeo event types to our internal AuditEvent format
 function mapAsgardeoEvent(payload: AsgardeoWebhookPayload): AuditEvent | null {
   const { event } = payload;
   if (!event) return null;
@@ -39,7 +37,6 @@ function mapAsgardeoEvent(payload: AsgardeoWebhookPayload): AuditEvent | null {
   const ts = new Date(event.timestamp || Date.now()).toISOString();
   const id = `asgardeo_${event.ref || Date.now()}`;
 
-  // Login failure
   if (
     event.type?.includes("login.failure") ||
     event.type?.includes("authentication.fail")
@@ -57,7 +54,6 @@ function mapAsgardeoEvent(payload: AsgardeoWebhookPayload): AuditEvent | null {
     };
   }
 
-  // Login success
   if (
     event.type?.includes("login.success") ||
     event.type?.includes("authentication.success")
@@ -75,7 +71,6 @@ function mapAsgardeoEvent(payload: AsgardeoWebhookPayload): AuditEvent | null {
     };
   }
 
-  // User deleted
   if (event.type?.includes("user.delete") || event.type?.includes("USER_DELETE")) {
     const deletedUser =
       event.subject?.claims?.["http://wso2.org/claims/username"] ||
@@ -94,7 +89,6 @@ function mapAsgardeoEvent(payload: AsgardeoWebhookPayload): AuditEvent | null {
     };
   }
 
-  // Role / group update
   if (
     event.type?.includes("role.update") ||
     event.type?.includes("group.update") ||
@@ -118,7 +112,6 @@ function mapAsgardeoEvent(payload: AsgardeoWebhookPayload): AuditEvent | null {
     };
   }
 
-  // User created / registered
   if (event.type?.includes("user.create") || event.type?.includes("REGISTRATION")) {
     const newUser =
       event.subject?.claims?.["http://wso2.org/claims/username"] ||
@@ -137,7 +130,6 @@ function mapAsgardeoEvent(payload: AsgardeoWebhookPayload): AuditEvent | null {
     };
   }
 
-  // Password update
   if (event.type?.includes("password.update") || event.type?.includes("PASSWORD_UPDATE")) {
     return {
       id,
@@ -152,7 +144,6 @@ function mapAsgardeoEvent(payload: AsgardeoWebhookPayload): AuditEvent | null {
     };
   }
 
-  // Unknown event — log it as system info so nothing is silently dropped
   return {
     id,
     timestamp: ts,
@@ -166,7 +157,6 @@ function mapAsgardeoEvent(payload: AsgardeoWebhookPayload): AuditEvent | null {
   };
 }
 
-// Asgardeo webhook payload shape (based on Asgardeo docs)
 interface AsgardeoWebhookPayload {
   ref?: string;
   organizationName?: string;
@@ -217,7 +207,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ status: "ignored", reason: "no event field in payload" });
   }
 
-  // push to audit log store + run alert rules
   globalAuditLogs.push(auditEvent);
   const triggered = evaluateRules(auditEvent, globalAuditLogs);
   triggered.forEach(addAlert);

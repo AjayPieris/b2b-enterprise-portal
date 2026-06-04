@@ -4,9 +4,23 @@ import { useAuthContext } from "@asgardeo/auth-react";
 import { useEffect, useState } from "react";
 import StatsCard from "../components/StatsCard";
 
+interface DashboardStats {
+  stats?: {
+    totalUsers?: string | number;
+    activeSessions?: string | number;
+    systemHealth?: string;
+    apiRequests?: string | number;
+  };
+  recentAlerts?: {
+    type: "info" | "warning" | "error";
+    message: string;
+    time: string;
+  }[];
+}
+
 export default function DashboardOverview() {
   const { getAccessToken } = useAuthContext();
-  const [stats, setStats] = useState<Record<string, string | number> | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch enterprise data from our protected API using Asgardeo access token
@@ -58,7 +72,7 @@ export default function DashboardOverview() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Total Users"
-          value={stats?.stats?.totalUsers || "0"}
+          value={String(stats?.stats?.totalUsers ?? "0")}
           change="Real-time SCIM2 Data"
           changeType="neutral"
           icon={
@@ -69,7 +83,7 @@ export default function DashboardOverview() {
         />
         <StatsCard
           title="Active Sessions"
-          value={stats?.stats?.activeSessions || "0"}
+          value={String(stats?.stats?.activeSessions ?? "0")}
           change="Currently Tracked"
           changeType="up"
           icon={
@@ -80,7 +94,7 @@ export default function DashboardOverview() {
         />
         <StatsCard
           title="System Health"
-          value={stats?.stats?.systemHealth || "Unknown"}
+          value={String(stats?.stats?.systemHealth ?? "Unknown")}
           change="100% uptime"
           changeType="up"
           icon={
@@ -91,7 +105,7 @@ export default function DashboardOverview() {
         />
         <StatsCard
           title="API Requests"
-          value={stats?.stats?.apiRequests || "Live"}
+          value={String(stats?.stats?.apiRequests ?? "Live")}
           change="Go to Gateway Monitor"
           changeType="neutral"
           icon={
