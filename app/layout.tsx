@@ -9,6 +9,11 @@ const outfit = Outfit({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "B2B Enterprise Portal",
   description: "Multi-tenant secure enterprise portal",
+  icons: {
+    icon: "/city.png",
+    shortcut: "/city.png",
+    apple: "/city.png",
+  },
 };
 
 export default function RootLayout({

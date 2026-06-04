@@ -23,7 +23,6 @@ export default function DashboardOverview() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch enterprise data from our protected API using Asgardeo access token
   useEffect(() => {
     async function fetchStats() {
       try {
@@ -52,7 +51,7 @@ export default function DashboardOverview() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div
           className="w-10 h-10 border-4 rounded-full animate-spin"
-          style={{ borderColor: 'rgba(212,168,67,0.2)', borderTopColor: '#d4a843' }}
+          style={{ borderColor: "rgba(212,168,67,0.2)", borderTopColor: "#d4a843" }}
         />
       </div>
     );
@@ -60,15 +59,13 @@ export default function DashboardOverview() {
 
   return (
     <div className="space-y-8">
-      {/* Page title */}
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>Dashboard Overview</h1>
-        <p className="text-sm mt-1" style={{ color: '#9e9e9e' }}>
+        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Dashboard Overview</h1>
+        <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
           Real-time enterprise metrics from secured API endpoints
         </p>
       </div>
 
-      {/* Stats grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Total Users"
@@ -116,34 +113,33 @@ export default function DashboardOverview() {
         />
       </div>
 
-      {/* Recent Activity section */}
       <div
         className="rounded-2xl p-6"
         style={{
-          background: '#ffffff',
-          border: '1px solid rgba(0,0,0,0.06)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-light)",
+          boxShadow: "var(--shadow-sm)",
         }}
       >
-        <h2 className="text-lg font-semibold mb-4" style={{ color: '#1a1a1a' }}>Recent Activity</h2>
+        <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--text-primary)" }}>Recent Activity</h2>
         <div className="space-y-4">
           {stats?.recentAlerts?.map((item: any, i: number) => (
             <div
               key={i}
               className="flex items-center gap-4 py-3 last:border-0"
-              style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}
+              style={{ borderBottom: "1px solid var(--border-light)" }}
             >
               <div className={`w-2.5 h-2.5 rounded-full ${
                 item.type === "info" ? "bg-emerald-400" :
                 item.type === "warning" ? "bg-amber-400" :
                 "bg-blue-400"
               }`} style={{
-                boxShadow: item.type === "info" ? '0 0 6px rgba(52,211,153,0.4)' :
-                           item.type === "warning" ? '0 0 6px rgba(251,191,36,0.4)' :
-                           '0 0 6px rgba(96,165,250,0.4)'
+                boxShadow: item.type === "info" ? "0 0 6px rgba(52,211,153,0.4)" :
+                           item.type === "warning" ? "0 0 6px rgba(251,191,36,0.4)" :
+                           "0 0 6px rgba(96,165,250,0.4)"
               }} />
-              <p className="text-sm flex-1" style={{ color: '#4b4b4b' }}>{item.message}</p>
-              <span className="text-xs" style={{ color: '#9e9e9e' }}>{new Date(item.time).toLocaleTimeString()}</span>
+              <p className="text-sm flex-1" style={{ color: "var(--text-secondary)" }}>{item.message}</p>
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>{new Date(item.time).toLocaleTimeString()}</span>
             </div>
           ))}
         </div>

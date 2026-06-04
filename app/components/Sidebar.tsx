@@ -111,17 +111,11 @@ export default function Sidebar() {
       {/* Logo / Brand */}
       <div className="p-6" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
         <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(135deg, #d4a843, #b8922e)',
-              boxShadow: '0 4px 12px rgba(212, 168, 67, 0.3)',
-            }}
-          >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
+          <img
+            src="/city.png"
+            alt="Enterprise Portal Logo"
+            className="w-10 h-10 rounded-xl object-cover shadow-sm border border-gray-200/50"
+          />
           <div>
             <h1 className="font-bold text-sm tracking-wide" style={{ color: '#1a1a1a' }}>Enterprise Portal</h1>
             <p className="text-[10px] font-medium uppercase tracking-widest" style={{ color: '#b8922e' }}>Powered by WSO2</p>

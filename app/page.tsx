@@ -78,14 +78,11 @@ export default function LandingPage() {
       {/* Top Header */}
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center z-10">
         <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
-            style={{ background: "linear-gradient(135deg, #d4a843, #b8922e)" }}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
+          <img
+            src="/city.png"
+            alt="Enterprise Portal Logo"
+            className="w-8 h-8 rounded-lg object-cover shadow-sm"
+          />
           <span className="font-bold text-sm tracking-wide text-gray-900">Enterprise Portal</span>
         </div>
         
@@ -204,17 +201,11 @@ export default function LandingPage() {
               boxShadow: "0 16px 48px rgba(0,0,0,0.08)",
             }}
           >
-            <div
-              className="w-14 h-14 mx-auto mb-6 rounded-2xl flex items-center justify-center text-white"
-              style={{
-                background: "linear-gradient(135deg, #d4a843, #b8922e)",
-                boxShadow: "0 8px 24px rgba(212, 168, 67, 0.3)",
-              }}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
+            <img
+              src="/security.png"
+              alt="Security Access Icon"
+              className="w-14 h-14 mx-auto mb-6 object-contain"
+            />
 
             <h3 className="text-2xl font-bold mb-1 text-gray-900">Secure Access Gateway</h3>
             <p className="text-sm text-gray-500 mb-8">Sign in to access your dashboard metrics and tenant resources.</p>
