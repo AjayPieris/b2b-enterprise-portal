@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.className} bg-gradient-to-br from-indigo-950 via-purple-900 to-indigo-900 min-h-screen`}>
+      <body className={`${outfit.className} warm-gradient-bg min-h-screen`}>
         <ClientProviders>
             {children}
         </ClientProviders>

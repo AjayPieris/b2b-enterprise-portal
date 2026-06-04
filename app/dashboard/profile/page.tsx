@@ -29,7 +29,10 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-10 h-10 border-4 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+        <div
+          className="w-10 h-10 border-4 rounded-full animate-spin"
+          style={{ borderColor: 'rgba(212,168,67,0.2)', borderTopColor: '#d4a843' }}
+        />
       </div>
     );
   }
@@ -51,18 +54,32 @@ export default function ProfilePage() {
     <div className="space-y-8 max-w-3xl">
       {/* Page title */}
       <div>
-        <h1 className="text-2xl font-bold text-white">My Profile</h1>
-        <p className="text-purple-300/50 text-sm mt-1">
+        <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>My Profile</h1>
+        <p className="text-sm mt-1" style={{ color: '#9e9e9e' }}>
           Identity information managed by WSO2 Asgardeo
         </p>
       </div>
 
       {/* Profile card */}
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden">
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{
+          background: '#ffffff',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}
+      >
         {/* Banner */}
-        <div className="h-32 bg-gradient-to-r from-purple-600/40 to-indigo-600/40 relative">
+        <div className="h-32 relative" style={{ background: 'linear-gradient(135deg, rgba(212,168,67,0.15), rgba(240,217,140,0.25))' }}>
           <div className="absolute -bottom-10 left-8">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl border-4 border-indigo-950">
+            <div
+              className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-bold"
+              style={{
+                background: 'linear-gradient(135deg, #d4a843, #b8922e)',
+                boxShadow: '0 4px 16px rgba(212, 168, 67, 0.3)',
+                border: '4px solid #f5f0e8',
+              }}
+            >
               {initials}
             </div>
           </div>
@@ -72,15 +89,16 @@ export default function ProfilePage() {
         <div className="pt-14 px-8 pb-8">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white">{username}</h2>
-              <p className="text-purple-300/60 text-sm">{email}</p>
+              <h2 className="text-xl font-bold" style={{ color: '#1a1a1a' }}>{username}</h2>
+              <p className="text-sm" style={{ color: '#6b6b6b' }}>{email}</p>
             </div>
             <span
-              className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border ${
-                isAdmin
-                  ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-                  : "bg-purple-500/15 text-purple-400 border-purple-500/30"
-              }`}
+              className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider"
+              style={{
+                background: isAdmin ? 'rgba(212,168,67,0.1)' : 'rgba(0,0,0,0.04)',
+                color: isAdmin ? '#b8922e' : '#6b6b6b',
+                border: `1px solid ${isAdmin ? 'rgba(212,168,67,0.2)' : 'rgba(0,0,0,0.08)'}`,
+              }}
             >
               {isAdmin ? "⚡ Admin" : "👤 Member"}
             </span>
@@ -99,9 +117,16 @@ export default function ProfilePage() {
       </div>
 
       {/* Groups & Roles from Asgardeo */}
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Groups & Roles</h3>
-        <p className="text-purple-300/50 text-xs mb-4">
+      <div
+        className="rounded-2xl p-6"
+        style={{
+          background: '#ffffff',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}
+      >
+        <h3 className="text-lg font-semibold mb-4" style={{ color: '#1a1a1a' }}>Groups & Roles</h3>
+        <p className="text-xs mb-4" style={{ color: '#9e9e9e' }}>
           These are assigned in WSO2 Asgardeo console and returned via the ID token &quot;groups&quot; claim
         </p>
         <div className="flex flex-wrap gap-2">
@@ -109,17 +134,22 @@ export default function ProfilePage() {
             allRoles.map((role: string, i: number) => (
               <span
                 key={i}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${
-                  role?.toLowerCase()?.includes("admin")
-                    ? "bg-amber-500/15 text-amber-400 border-amber-500/20"
-                    : "bg-purple-500/15 text-purple-300 border-purple-500/20"
-                }`}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                style={{
+                  background: role?.toLowerCase()?.includes("admin")
+                    ? 'rgba(212,168,67,0.1)'
+                    : 'rgba(0,0,0,0.04)',
+                  color: role?.toLowerCase()?.includes("admin")
+                    ? '#b8922e'
+                    : '#6b6b6b',
+                  border: `1px solid ${role?.toLowerCase()?.includes("admin") ? 'rgba(212,168,67,0.2)' : 'rgba(0,0,0,0.08)'}`,
+                }}
               >
                 {role}
               </span>
             ))
           ) : (
-            <span className="text-purple-400/40 text-sm">No groups assigned</span>
+            <span className="text-sm" style={{ color: '#9e9e9e' }}>No groups assigned</span>
           )}
         </div>
       </div>
@@ -130,11 +160,18 @@ export default function ProfilePage() {
 // Small reusable component for displaying a labeled value
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-5">
-      <p className="text-purple-300/50 text-xs font-semibold uppercase tracking-wider mb-1">
+    <div
+      className="rounded-xl p-5"
+      style={{
+        background: '#ffffff',
+        border: '1px solid rgba(0,0,0,0.06)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      }}
+    >
+      <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: '#9e9e9e' }}>
         {label}
       </p>
-      <p className="text-white font-medium text-sm truncate">{value}</p>
+      <p className="font-medium text-sm truncate" style={{ color: '#1a1a1a' }}>{value}</p>
     </div>
   );
 }

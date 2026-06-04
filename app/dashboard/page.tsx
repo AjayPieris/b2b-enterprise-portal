@@ -36,7 +36,10 @@ export default function DashboardOverview() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-10 h-10 border-4 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+        <div
+          className="w-10 h-10 border-4 rounded-full animate-spin"
+          style={{ borderColor: 'rgba(212,168,67,0.2)', borderTopColor: '#d4a843' }}
+        />
       </div>
     );
   }
@@ -45,8 +48,8 @@ export default function DashboardOverview() {
     <div className="space-y-8">
       {/* Page title */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard Overview</h1>
-        <p className="text-purple-300/50 text-sm mt-1">
+        <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>Dashboard Overview</h1>
+        <p className="text-sm mt-1" style={{ color: '#9e9e9e' }}>
           Real-time enterprise metrics from secured API endpoints
         </p>
       </div>
@@ -100,21 +103,33 @@ export default function DashboardOverview() {
       </div>
 
       {/* Recent Activity section */}
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Recent Activity</h2>
+      <div
+        className="rounded-2xl p-6"
+        style={{
+          background: '#ffffff',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}
+      >
+        <h2 className="text-lg font-semibold mb-4" style={{ color: '#1a1a1a' }}>Recent Activity</h2>
         <div className="space-y-4">
           {stats?.recentAlerts?.map((item: any, i: number) => (
             <div
               key={i}
-              className="flex items-center gap-4 py-3 border-b border-white/5 last:border-0"
+              className="flex items-center gap-4 py-3 last:border-0"
+              style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}
             >
-              <div className={`w-2 h-2 rounded-full ${
+              <div className={`w-2.5 h-2.5 rounded-full ${
                 item.type === "info" ? "bg-emerald-400" :
                 item.type === "warning" ? "bg-amber-400" :
-                "bg-purple-400"
-              }`} />
-              <p className="text-sm text-purple-200/80 flex-1">{item.message}</p>
-              <span className="text-xs text-purple-400/40">{new Date(item.time).toLocaleTimeString()}</span>
+                "bg-blue-400"
+              }`} style={{
+                boxShadow: item.type === "info" ? '0 0 6px rgba(52,211,153,0.4)' :
+                           item.type === "warning" ? '0 0 6px rgba(251,191,36,0.4)' :
+                           '0 0 6px rgba(96,165,250,0.4)'
+              }} />
+              <p className="text-sm flex-1" style={{ color: '#4b4b4b' }}>{item.message}</p>
+              <span className="text-xs" style={{ color: '#9e9e9e' }}>{new Date(item.time).toLocaleTimeString()}</span>
             </div>
           ))}
         </div>

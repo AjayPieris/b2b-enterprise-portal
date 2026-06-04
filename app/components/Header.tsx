@@ -5,23 +5,23 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import type { TriggeredAlert } from "../lib/alertRules";
 
 const severityColor: Record<string, string> = {
-  low: "text-blue-400",
-  medium: "text-amber-400",
-  high: "text-orange-400",
-  critical: "text-red-400",
+  low: "#3b82f6",
+  medium: "#d4a843",
+  high: "#ea580c",
+  critical: "#dc2626",
 };
 
-const severityBg: Record<string, string> = {
-  low: "bg-blue-500/10 border-blue-500/20",
-  medium: "bg-amber-500/10 border-amber-500/20",
-  high: "bg-orange-500/10 border-orange-500/20",
-  critical: "bg-red-500/10 border-red-500/20",
+const severityBgStyle: Record<string, React.CSSProperties> = {
+  low: { background: "rgba(59,130,246,0.08)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.2)" },
+  medium: { background: "rgba(212,168,67,0.08)", color: "#b8922e", border: "1px solid rgba(212,168,67,0.2)" },
+  high: { background: "rgba(234,88,12,0.08)", color: "#ea580c", border: "1px solid rgba(234,88,12,0.2)" },
+  critical: { background: "rgba(220,38,38,0.08)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" },
 };
 
-const resolvedBadge: Record<string, string> = {
-  deleted: "bg-red-500/20 text-red-300 border-red-500/30",
-  allowed: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-  dismissed: "bg-white/10 text-purple-400 border-white/20",
+const resolvedBadgeStyle: Record<string, React.CSSProperties> = {
+  deleted: { background: "rgba(220,38,38,0.08)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.15)" },
+  allowed: { background: "rgba(34,197,94,0.08)", color: "#16a34a", border: "1px solid rgba(34,197,94,0.15)" },
+  dismissed: { background: "rgba(0,0,0,0.04)", color: "#9e9e9e", border: "1px solid rgba(0,0,0,0.08)" },
 };
 
 const resolvedLabel: Record<string, string> = {
@@ -190,31 +190,34 @@ export default function Header() {
 
     return (
       <div
-        className={`px-4 py-3 border-l-2 transition-opacity ${
-          alert.resolved
-            ? "border-white/10 opacity-50"
-            : alert.read
-            ? "border-white/10 opacity-70"
-            : "border-red-500"
-        }`}
+        className="px-4 py-3 transition-opacity"
+        style={{
+          borderLeft: `3px solid ${
+            alert.resolved
+              ? 'rgba(0,0,0,0.06)'
+              : alert.read
+              ? 'rgba(0,0,0,0.08)'
+              : severityColor[alert.severity] || '#dc2626'
+          }`,
+          opacity: alert.resolved ? 0.5 : alert.read ? 0.75 : 1,
+        }}
       >
         {/* Header row: severity badge + time */}
         <div className="flex items-center justify-between gap-2 mb-1">
           <div
-            className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-              severityBg[alert.severity]
-            } ${severityColor[alert.severity]}`}
+            className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+            style={severityBgStyle[alert.severity]}
           >
             {alert.severity}
           </div>
-          <span className="text-[10px] text-purple-400/40 flex-shrink-0">
+          <span className="text-[10px] flex-shrink-0" style={{ color: '#9e9e9e' }}>
             {new Date(alert.triggeredAt).toLocaleTimeString()}
           </span>
         </div>
 
         {/* Rule name + message */}
-        <p className="text-xs font-semibold text-white">{alert.ruleName}</p>
-        <p className="text-[11px] text-purple-300/60 mt-0.5 leading-relaxed">
+        <p className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>{alert.ruleName}</p>
+        <p className="text-[11px] mt-0.5 leading-relaxed" style={{ color: '#6b6b6b' }}>
           {alert.message}
         </p>
 
@@ -226,7 +229,12 @@ export default function Header() {
               onClick={() => handleUserAction(alert, "delete")}
               disabled={isLoading}
               title={`Permanently delete ${alert.subjectUser} from Asgardeo`}
-              className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 hover:text-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: 'rgba(220,38,38,0.06)',
+                color: '#dc2626',
+                border: '1px solid rgba(220,38,38,0.15)',
+              }}
             >
               {isLoading ? (
                 <div className="w-3 h-3 border border-red-400/50 border-t-red-400 rounded-full animate-spin" />
@@ -244,7 +252,12 @@ export default function Header() {
               onClick={() => handleUserAction(alert, "allow")}
               disabled={isLoading}
               title={`Unlock / allow ${alert.subjectUser} to log in`}
-              className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 hover:text-emerald-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: 'rgba(34,197,94,0.06)',
+                color: '#16a34a',
+                border: '1px solid rgba(34,197,94,0.15)',
+              }}
             >
               {isLoading ? (
                 <div className="w-3 h-3 border border-emerald-400/50 border-t-emerald-400 rounded-full animate-spin" />
@@ -263,9 +276,8 @@ export default function Header() {
         {alert.resolved && alert.resolvedAction && (
           <div className="mt-2">
             <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                resolvedBadge[alert.resolvedAction]
-              }`}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+              style={resolvedBadgeStyle[alert.resolvedAction]}
             >
               {resolvedLabel[alert.resolvedAction]}
             </span>
@@ -274,7 +286,7 @@ export default function Header() {
 
         {/* ── Error feedback ───────────────────────────────────────────── */}
         {aErr && (
-          <p className="mt-1.5 text-[10px] text-red-400/80">{aErr}</p>
+          <p className="mt-1.5 text-[10px]" style={{ color: '#dc2626' }}>{aErr}</p>
         )}
       </div>
     );
@@ -282,12 +294,19 @@ export default function Header() {
 
   // ── Main render ──────────────────────────────────────────────────────────
   return (
-    <header className="sticky top-0 z-40 h-16 bg-black/20 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-8">
+    <header
+      className="sticky top-0 z-40 h-16 flex items-center justify-between px-8"
+      style={{
+        background: 'rgba(245, 240, 232, 0.85)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(0,0,0,0.06)',
+      }}
+    >
       <div>
-        <h2 className="text-white font-semibold text-lg">
-          Welcome back, <span className="text-purple-400">{state.username || "User"}</span>
+        <h2 className="font-semibold text-lg" style={{ color: '#1a1a1a' }}>
+          Welcome back, <span style={{ color: '#b8922e' }}>{state.username || "User"}</span>
         </h2>
-        <p className="text-purple-300/50 text-xs">
+        <p className="text-xs" style={{ color: '#9e9e9e' }}>
           {new Date().toLocaleDateString("en-US", {
             weekday: "long",
             year: "numeric",
@@ -304,14 +323,21 @@ export default function Header() {
             id="notification-bell-btn"
             onClick={openPanel}
             aria-label="Open security alerts"
-            className="relative w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+            className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
+            style={{
+              background: 'rgba(0,0,0,0.04)',
+              border: '1px solid rgba(0,0,0,0.06)',
+            }}
           >
-            <svg className="w-4 h-4 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" style={{ color: '#6b6b6b' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+              <span
+                className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[10px] font-bold flex items-center justify-center animate-pulse"
+                style={{ background: '#dc2626' }}
+              >
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
@@ -319,47 +345,74 @@ export default function Header() {
 
           {/* ── Dropdown panel ──────────────────────────────────────── */}
           {panelOpen && (
-            <div className="absolute right-0 top-11 w-[22rem] bg-[#0f0f1a] border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50">
+            <div
+              className="absolute right-0 top-11 w-[22rem] overflow-hidden z-50"
+              style={{
+                background: '#fff',
+                border: '1px solid rgba(0,0,0,0.08)',
+                borderRadius: '16px',
+                boxShadow: '0 16px 48px rgba(0,0,0,0.12)',
+              }}
+            >
               {/* Panel header */}
-              <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+              <div
+                className="px-4 py-3 flex items-center justify-between"
+                style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}
+              >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-white">Security Alerts</span>
+                  <span className="text-sm font-semibold" style={{ color: '#1a1a1a' }}>Security Alerts</span>
                   {isAdmin && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    <span
+                      className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+                      style={{
+                        background: 'rgba(212,168,67,0.12)',
+                        color: '#b8922e',
+                        border: '1px solid rgba(212,168,67,0.2)',
+                      }}
+                    >
                       Admin
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] text-purple-400/60 uppercase tracking-wider">
+                <span className="text-[10px] uppercase tracking-wider" style={{ color: '#9e9e9e' }}>
                   {alerts.filter((a) => !a.resolved).length} active
                 </span>
               </div>
 
               {/* Alert list */}
-              <div className="max-h-[22rem] overflow-y-auto divide-y divide-white/5">
+              <div className="max-h-[22rem] overflow-y-auto" style={{ borderTop: 'none' }}>
                 {alerts.length === 0 ? (
                   <div className="p-6 text-center">
                     <p className="text-2xl mb-2">🛡️</p>
-                    <p className="text-purple-300/50 text-xs">No alerts — all clear</p>
+                    <p className="text-xs" style={{ color: '#9e9e9e' }}>No alerts — all clear</p>
                   </div>
                 ) : (
-                  alerts.map((alert) => (
-                    <AlertCard key={alert.id} alert={alert} />
+                  alerts.map((alert, index) => (
+                    <div key={alert.id} style={{ borderTop: index > 0 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
+                      <AlertCard alert={alert} />
+                    </div>
                   ))
                 )}
               </div>
 
               {/* Footer */}
               {alerts.length > 0 && (
-                <div className="px-4 py-2.5 border-t border-white/10 bg-white/[0.02] flex items-center justify-between">
+                <div
+                  className="px-4 py-2.5 flex items-center justify-between"
+                  style={{
+                    borderTop: '1px solid rgba(0,0,0,0.06)',
+                    background: 'rgba(0,0,0,0.02)',
+                  }}
+                >
                   <a
                     href="/dashboard/audit-logs"
-                    className="text-[11px] text-purple-400 hover:text-purple-300 transition-colors"
+                    className="text-[11px] transition-colors"
+                    style={{ color: '#b8922e' }}
                   >
                     View full audit log →
                   </a>
                   {isAdmin && (
-                    <span className="text-[10px] text-purple-400/40">
+                    <span className="text-[10px]" style={{ color: '#9e9e9e' }}>
                       Admin actions enabled
                     </span>
                   )}
@@ -371,19 +424,26 @@ export default function Header() {
 
         {/* Role badge */}
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border ${
-            isAdmin
-              ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-              : "bg-purple-500/15 text-purple-400 border-purple-500/30"
-          }`}
+          className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider"
+          style={{
+            background: isAdmin ? 'rgba(212,168,67,0.1)' : 'rgba(0,0,0,0.04)',
+            color: isAdmin ? '#b8922e' : '#6b6b6b',
+            border: `1px solid ${isAdmin ? 'rgba(212,168,67,0.2)' : 'rgba(0,0,0,0.08)'}`,
+          }}
         >
           {isAdmin ? "⚡ Admin" : "👤 Member"}
         </span>
 
         {/* Identity provider badge */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+          style={{
+            background: 'rgba(34,197,94,0.06)',
+            border: '1px solid rgba(34,197,94,0.15)',
+          }}
+        >
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-emerald-400/80 text-[10px] font-semibold uppercase tracking-wider">
+          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#16a34a' }}>
             Asgardeo Connected
           </span>
         </div>

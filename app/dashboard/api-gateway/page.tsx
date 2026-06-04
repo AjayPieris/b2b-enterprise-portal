@@ -36,7 +36,10 @@ export default function ApiGatewayPage() {
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-10 h-10 border-4 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+        <div
+          className="w-10 h-10 border-4 rounded-full animate-spin"
+          style={{ borderColor: 'rgba(212,168,67,0.2)', borderTopColor: '#d4a843' }}
+        />
       </div>
     );
   }
@@ -45,47 +48,82 @@ export default function ApiGatewayPage() {
     <AuthGuard requireAdmin={true}>
       <div className="space-y-8">
         <div>
-          <h1 className="text-2xl font-bold text-white">API Gateway Monitor</h1>
-          <p className="text-purple-300/50 text-sm mt-1">
+          <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>API Gateway Monitor</h1>
+          <p className="text-sm mt-1" style={{ color: '#9e9e9e' }}>
             Real-time API traffic analysis and performance metrics
           </p>
         </div>
 
         {/* Real-time stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-            <h3 className="text-sm font-semibold text-purple-300/60 uppercase tracking-wider mb-2">Total Requests (1h)</h3>
-            <p className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+          <div
+            className="rounded-2xl p-6"
+            style={{
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.06)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
+          >
+            <h3 className="text-sm font-semibold uppercase tracking-wider mb-2" style={{ color: '#9e9e9e' }}>Total Requests (1h)</h3>
+            <p className="text-4xl font-bold" style={{ color: '#3b82f6' }}>
               {data?.totalRequests || 0}
             </p>
           </div>
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-            <h3 className="text-sm font-semibold text-purple-300/60 uppercase tracking-wider mb-2">Avg Latency</h3>
+          <div
+            className="rounded-2xl p-6"
+            style={{
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.06)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
+          >
+            <h3 className="text-sm font-semibold uppercase tracking-wider mb-2" style={{ color: '#9e9e9e' }}>Avg Latency</h3>
             <div className="flex items-baseline gap-2">
-              <p className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+              <p className="text-4xl font-bold" style={{ color: '#16a34a' }}>
                 {data?.avgLatency || 0}
               </p>
-              <span className="text-purple-300/50 text-sm font-medium">ms</span>
+              <span className="text-sm font-medium" style={{ color: '#9e9e9e' }}>ms</span>
             </div>
           </div>
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-            <h3 className="text-sm font-semibold text-purple-300/60 uppercase tracking-wider mb-2">Error Rate</h3>
+          <div
+            className="rounded-2xl p-6"
+            style={{
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.06)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
+          >
+            <h3 className="text-sm font-semibold uppercase tracking-wider mb-2" style={{ color: '#9e9e9e' }}>Error Rate</h3>
             <div className="flex items-baseline gap-2">
-              <p className={`text-4xl font-bold bg-clip-text text-transparent ${
-                parseFloat(data?.errorRate || "0") > 5 ? "bg-gradient-to-r from-red-400 to-pink-400" : "bg-gradient-to-r from-purple-400 to-pink-400"
-              }`}>
+              <p className="text-4xl font-bold" style={{
+                color: parseFloat(data?.errorRate || "0") > 5 ? '#dc2626' : '#b8922e'
+              }}>
                 {data?.errorRate || "0.0"}
               </p>
-              <span className="text-purple-300/50 text-sm font-medium">%</span>
+              <span className="text-sm font-medium" style={{ color: '#9e9e9e' }}>%</span>
             </div>
           </div>
         </div>
 
         {/* Live Traffic Table */}
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+        <div
+          className="rounded-2xl p-6"
+          style={{
+            background: '#ffffff',
+            border: '1px solid rgba(0,0,0,0.06)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          }}
+        >
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold text-white">Live Traffic Feed</h2>
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-full">
+            <h2 className="text-lg font-semibold" style={{ color: '#1a1a1a' }}>Live Traffic Feed</h2>
+            <div
+              className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full"
+              style={{
+                color: '#16a34a',
+                background: 'rgba(34,197,94,0.06)',
+                border: '1px solid rgba(34,197,94,0.15)',
+              }}
+            >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -94,33 +132,38 @@ export default function ApiGatewayPage() {
             </div>
           </div>
           
-          <div className="overflow-hidden rounded-xl border border-white/5">
+          <div className="overflow-hidden rounded-xl" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
             <table className="w-full text-sm text-left">
-              <thead className="text-xs text-purple-300/50 uppercase bg-white/5">
+              <thead style={{ background: 'rgba(0,0,0,0.02)' }}>
                 <tr>
-                  <th className="px-6 py-3">Time</th>
-                  <th className="px-6 py-3">Endpoint</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3">Latency</th>
+                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#9e9e9e' }}>Time</th>
+                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#9e9e9e' }}>Endpoint</th>
+                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#9e9e9e' }}>Status</th>
+                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: '#9e9e9e' }}>Latency</th>
                 </tr>
               </thead>
               <tbody>
                 {data?.recentLogs?.length > 0 ? data.recentLogs.map((log: any, i: number) => (
-                  <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02]">
-                    <td className="px-6 py-4 text-purple-200/70">{new Date(log.timestamp).toLocaleTimeString()}</td>
-                    <td className="px-6 py-4 font-mono text-purple-300">{log.endpoint}</td>
+                  <tr key={i} className="transition-colors" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                    <td className="px-6 py-4" style={{ color: '#6b6b6b' }}>{new Date(log.timestamp).toLocaleTimeString()}</td>
+                    <td className="px-6 py-4 font-mono" style={{ color: '#1a1a1a' }}>{log.endpoint}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                        log.status >= 400 ? "bg-red-500/20 text-red-400" : "bg-emerald-500/20 text-emerald-400"
-                      }`}>
+                      <span
+                        className="px-2 py-1 rounded-md text-xs font-semibold"
+                        style={{
+                          background: log.status >= 400 ? 'rgba(220,38,38,0.06)' : 'rgba(34,197,94,0.06)',
+                          color: log.status >= 400 ? '#dc2626' : '#16a34a',
+                          border: `1px solid ${log.status >= 400 ? 'rgba(220,38,38,0.15)' : 'rgba(34,197,94,0.15)'}`,
+                        }}
+                      >
                         {log.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-purple-200/70">{log.latency} ms</td>
+                    <td className="px-6 py-4" style={{ color: '#6b6b6b' }}>{log.latency} ms</td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-purple-300/40">
+                    <td colSpan={4} className="px-6 py-8 text-center" style={{ color: '#9e9e9e' }}>
                       No API traffic detected yet. 
                     </td>
                   </tr>

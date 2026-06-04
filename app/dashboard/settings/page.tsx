@@ -15,20 +15,34 @@ function SettingsContent() {
     <div className="space-y-8 max-w-3xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Organization Settings</h1>
-          <p className="text-purple-300/50 text-sm mt-1">
+          <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>Organization Settings</h1>
+          <p className="text-sm mt-1" style={{ color: '#9e9e9e' }}>
             Configure your organization — Admin access only
           </p>
         </div>
-        <span className="px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30">
+        <span
+          className="px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider"
+          style={{
+            background: 'rgba(212,168,67,0.1)',
+            color: '#b8922e',
+            border: '1px solid rgba(212,168,67,0.2)',
+          }}
+        >
           🔒 Admin Only
         </span>
       </div>
 
       {/* Identity Provider section */}
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-1">Identity Provider</h2>
-        <p className="text-purple-300/40 text-xs mb-6">Your authentication is managed by WSO2 Asgardeo</p>
+      <div
+        className="rounded-2xl p-6"
+        style={{
+          background: '#ffffff',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}
+      >
+        <h2 className="text-lg font-semibold mb-1" style={{ color: '#1a1a1a' }}>Identity Provider</h2>
+        <p className="text-xs mb-6" style={{ color: '#9e9e9e' }}>Your authentication is managed by WSO2 Asgardeo</p>
 
         <div className="space-y-4">
           <SettingsRow label="Provider" value="WSO2 Asgardeo" />
@@ -40,9 +54,16 @@ function SettingsContent() {
       </div>
 
       {/* Security settings */}
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-1">Security Configuration</h2>
-        <p className="text-purple-300/40 text-xs mb-6">Authentication and access control settings</p>
+      <div
+        className="rounded-2xl p-6"
+        style={{
+          background: '#ffffff',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}
+      >
+        <h2 className="text-lg font-semibold mb-1" style={{ color: '#1a1a1a' }}>Security Configuration</h2>
+        <p className="text-xs mb-6" style={{ color: '#9e9e9e' }}>Authentication and access control settings</p>
 
         <div className="space-y-5">
           <ToggleSetting
@@ -69,15 +90,27 @@ function SettingsContent() {
       </div>
 
       {/* Scopes section */}
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-1">Requested OIDC Scopes</h2>
-        <p className="text-purple-300/40 text-xs mb-6">Scopes requested during the Asgardeo login flow</p>
+      <div
+        className="rounded-2xl p-6"
+        style={{
+          background: '#ffffff',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}
+      >
+        <h2 className="text-lg font-semibold mb-1" style={{ color: '#1a1a1a' }}>Requested OIDC Scopes</h2>
+        <p className="text-xs mb-6" style={{ color: '#9e9e9e' }}>Scopes requested during the Asgardeo login flow</p>
 
         <div className="flex flex-wrap gap-2">
           {["openid", "profile", "groups", "roles"].map((scope) => (
             <span
               key={scope}
-              className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-purple-500/15 text-purple-300 border border-purple-500/20"
+              className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium"
+              style={{
+                background: 'rgba(212,168,67,0.08)',
+                color: '#b8922e',
+                border: '1px solid rgba(212,168,67,0.15)',
+              }}
             >
               {scope}
             </span>
@@ -88,11 +121,15 @@ function SettingsContent() {
       {/* Save button */}
       <button
         onClick={handleSave}
-        className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 ${
-          saved
-            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-            : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500 shadow-lg shadow-purple-500/20"
-        }`}
+        className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300"
+        style={{
+          background: saved
+            ? 'rgba(34,197,94,0.08)'
+            : 'linear-gradient(135deg, #d4a843, #b8922e)',
+          color: saved ? '#16a34a' : '#ffffff',
+          border: saved ? '1px solid rgba(34,197,94,0.2)' : 'none',
+          boxShadow: saved ? 'none' : '0 4px 16px rgba(212, 168, 67, 0.3)',
+        }}
       >
         {saved ? "✓ Settings Saved" : "Save Changes"}
       </button>
@@ -105,16 +142,17 @@ function SettingsRow({ label, value, masked }: { label: string; value: string; m
   const [revealed, setRevealed] = useState(false);
 
   return (
-    <div className="flex items-center justify-between py-3 border-b border-white/5">
-      <span className="text-sm text-purple-300/60">{label}</span>
+    <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+      <span className="text-sm" style={{ color: '#6b6b6b' }}>{label}</span>
       <div className="flex items-center gap-2">
-        <span className="text-sm text-white font-medium font-mono">
+        <span className="text-sm font-medium font-mono" style={{ color: '#1a1a1a' }}>
           {masked && !revealed ? "••••••••••••••" : value}
         </span>
         {masked && (
           <button
             onClick={() => setRevealed(!revealed)}
-            className="text-purple-400/50 hover:text-purple-400 text-xs transition-colors"
+            className="text-xs transition-colors"
+            style={{ color: '#b8922e' }}
           >
             {revealed ? "Hide" : "Show"}
           </button>
@@ -129,22 +167,16 @@ function ToggleSetting({ label, description, defaultOn }: { label: string; descr
   const [enabled, setEnabled] = useState(defaultOn);
 
   return (
-    <div className="flex items-center justify-between py-3 border-b border-white/5">
+    <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
       <div>
-        <p className="text-sm text-white font-medium">{label}</p>
-        <p className="text-xs text-purple-300/40 mt-0.5">{description}</p>
+        <p className="text-sm font-medium" style={{ color: '#1a1a1a' }}>{label}</p>
+        <p className="text-xs mt-0.5" style={{ color: '#9e9e9e' }}>{description}</p>
       </div>
       <button
         onClick={() => setEnabled(!enabled)}
-        className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
-          enabled ? "bg-purple-500" : "bg-white/10"
-        }`}
+        className={`toggle-warm ${enabled ? 'active' : 'inactive'}`}
       >
-        <div
-          className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${
-            enabled ? "left-6" : "left-1"
-          }`}
-        />
+        <div className="toggle-knob" />
       </button>
     </div>
   );

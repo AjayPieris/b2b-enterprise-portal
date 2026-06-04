@@ -42,20 +42,25 @@ interface AuditSummary {
 }
 
 // ── Styling maps ──────────────────────────────────────────────────────────
-// These map event types and severities to their visual styles
-
 const typeConfig = {
-  auth: { label: "Auth", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-400" },
-  admin: { label: "Admin", color: "bg-amber-500/15 text-amber-400 border-amber-500/20", dot: "bg-amber-400" },
-  system: { label: "System", color: "bg-blue-500/15 text-blue-400 border-blue-500/20", dot: "bg-blue-400" },
-  security: { label: "Security", color: "bg-red-500/15 text-red-400 border-red-500/20", dot: "bg-red-400" },
+  auth: { label: "Auth", dot: "#16a34a", bgStyle: { background: 'rgba(34,197,94,0.06)', color: '#16a34a', border: '1px solid rgba(34,197,94,0.15)' } },
+  admin: { label: "Admin", dot: "#d4a843", bgStyle: { background: 'rgba(212,168,67,0.08)', color: '#b8922e', border: '1px solid rgba(212,168,67,0.15)' } },
+  system: { label: "System", dot: "#3b82f6", bgStyle: { background: 'rgba(59,130,246,0.06)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.15)' } },
+  security: { label: "Security", dot: "#dc2626", bgStyle: { background: 'rgba(220,38,38,0.06)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.15)' } },
 };
 
 const severityConfig = {
-  info: { label: "Info", color: "bg-blue-500/15 text-blue-400 border-blue-500/20", icon: "ℹ️" },
-  warning: { label: "Warning", color: "bg-amber-500/15 text-amber-400 border-amber-500/20", icon: "⚠️" },
-  critical: { label: "Critical", color: "bg-red-500/15 text-red-400 border-red-500/20", icon: "🚨" },
+  info: { label: "Info", icon: "ℹ️", bgStyle: { background: 'rgba(59,130,246,0.06)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.15)' } },
+  warning: { label: "Warning", icon: "⚠️", bgStyle: { background: 'rgba(212,168,67,0.08)', color: '#b8922e', border: '1px solid rgba(212,168,67,0.15)' } },
+  critical: { label: "Critical", icon: "🚨", bgStyle: { background: 'rgba(220,38,38,0.06)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.15)' } },
 };
+
+const summaryGradients = [
+  { text: '#b8922e' },
+  { text: '#dc2626' },
+  { text: '#d4a843' },
+  { text: '#ea580c' },
+];
 
 // ── Format timestamp to human-readable relative time ────────────────────
 function formatTime(timestamp: string): string {
@@ -118,7 +123,10 @@ export default function AuditLogsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-10 h-10 border-4 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+        <div
+          className="w-10 h-10 border-4 rounded-full animate-spin"
+          style={{ borderColor: 'rgba(212,168,67,0.2)', borderTopColor: '#d4a843' }}
+        />
       </div>
     );
   }
@@ -128,15 +136,21 @@ export default function AuditLogsPage() {
       {/* ── Page Header ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Audit Logs</h1>
-          <p className="text-purple-300/50 text-sm mt-1">
+          <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>Audit Logs</h1>
+          <p className="text-sm mt-1" style={{ color: '#9e9e9e' }}>
             Security and compliance event trail — tracked by Asgardeo IAM
           </p>
         </div>
         {/* Live indicator */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+          style={{
+            background: 'rgba(34,197,94,0.06)',
+            border: '1px solid rgba(34,197,94,0.15)',
+          }}
+        >
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-emerald-400/80 text-[10px] font-semibold uppercase tracking-wider">
+          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#16a34a' }}>
             Live Monitoring
           </span>
         </div>
@@ -145,43 +159,30 @@ export default function AuditLogsPage() {
       {/* ── Summary Cards ────────────────────────────────────────────────── */}
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <SummaryCard
-            label="Total Events"
-            value={summary.total.toString()}
-            gradient="from-purple-500 to-indigo-500"
-          />
-          <SummaryCard
-            label="Security Alerts"
-            value={summary.byType.security.toString()}
-            gradient="from-red-500 to-pink-500"
-          />
-          <SummaryCard
-            label="Warnings"
-            value={summary.bySeverity.warning.toString()}
-            gradient="from-amber-500 to-orange-500"
-          />
-          <SummaryCard
-            label="Critical"
-            value={summary.bySeverity.critical.toString()}
-            gradient="from-red-600 to-red-400"
-          />
+          <SummaryCard label="Total Events" value={summary.total.toString()} colorIndex={0} />
+          <SummaryCard label="Security Alerts" value={summary.byType.security.toString()} colorIndex={1} />
+          <SummaryCard label="Warnings" value={summary.bySeverity.warning.toString()} colorIndex={2} />
+          <SummaryCard label="Critical" value={summary.bySeverity.critical.toString()} colorIndex={3} />
         </div>
       )}
 
       {/* ── Filter Bar ───────────────────────────────────────────────────── */}
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4">
+      <div
+        className="rounded-xl p-4"
+        style={{
+          background: '#ffffff',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}
+      >
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-purple-300/60 text-xs font-semibold uppercase tracking-wider">
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9e9e9e' }}>
             Filter by:
           </span>
 
           {/* Type filters */}
           <div className="flex gap-2">
-            <FilterChip
-              label="All"
-              active={typeFilter === null}
-              onClick={() => setTypeFilter(null)}
-            />
+            <FilterChip label="All" active={typeFilter === null} onClick={() => setTypeFilter(null)} />
             {(Object.entries(typeConfig) as [string, { label: string }][]).map(([key, cfg]) => (
               <FilterChip
                 key={key}
@@ -193,7 +194,7 @@ export default function AuditLogsPage() {
           </div>
 
           {/* Divider */}
-          <div className="w-px h-6 bg-white/10" />
+          <div className="w-px h-6" style={{ background: 'rgba(0,0,0,0.08)' }} />
 
           {/* Severity filters */}
           <div className="flex gap-2">
@@ -210,11 +211,18 @@ export default function AuditLogsPage() {
       </div>
 
       {/* ── Event List ───────────────────────────────────────────────────── */}
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden">
-        <div className="divide-y divide-white/5">
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{
+          background: '#ffffff',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}
+      >
+        <div>
           {events.length === 0 ? (
             <div className="p-12 text-center">
-              <p className="text-purple-300/50 text-sm">No events match your filters</p>
+              <p className="text-sm" style={{ color: '#9e9e9e' }}>No events match your filters</p>
             </div>
           ) : (
             events.map((event) => {
@@ -225,43 +233,52 @@ export default function AuditLogsPage() {
               return (
                 <div
                   key={event.id}
-                  className={`px-6 py-4 cursor-pointer transition-all duration-200 ${
-                    isExpanded ? "bg-white/[0.05]" : "hover:bg-white/[0.03]"
-                  }`}
+                  className="px-6 py-4 cursor-pointer transition-all duration-200"
+                  style={{
+                    borderBottom: '1px solid rgba(0,0,0,0.04)',
+                    background: isExpanded ? 'rgba(0,0,0,0.02)' : 'transparent',
+                  }}
                   onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
                 >
                   {/* Main row */}
                   <div className="flex items-center gap-4">
                     {/* Severity dot */}
-                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${tConfig.dot}`} />
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: tConfig.dot }} />
 
                     {/* Event info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-1">
-                        <code className="text-sm text-white font-medium font-mono">
+                        <code className="text-sm font-medium font-mono" style={{ color: '#1a1a1a' }}>
                           {event.action}
                         </code>
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${tConfig.color}`}>
+                        <span
+                          className="px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider"
+                          style={tConfig.bgStyle}
+                        >
                           {tConfig.label}
                         </span>
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${sConfig.color}`}>
+                        <span
+                          className="px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider"
+                          style={sConfig.bgStyle}
+                        >
                           {sConfig.label}
                         </span>
                       </div>
-                      <p className="text-sm text-purple-300/60 truncate">{event.details}</p>
+                      <p className="text-sm truncate" style={{ color: '#6b6b6b' }}>{event.details}</p>
                     </div>
 
                     {/* Actor & time */}
                     <div className="text-right flex-shrink-0">
-                      <p className="text-xs text-purple-200/70 font-medium">{event.actor}</p>
-                      <p className="text-xs text-purple-400/40">{formatTime(event.timestamp)}</p>
+                      <p className="text-xs font-medium" style={{ color: '#4b4b4b' }}>{event.actor}</p>
+                      <p className="text-xs" style={{ color: '#9e9e9e' }}>{formatTime(event.timestamp)}</p>
                     </div>
 
                     {/* Expand chevron */}
                     <svg
-                      className={`w-4 h-4 text-purple-400/40 transition-transform duration-200 flex-shrink-0 ${
+                      className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${
                         isExpanded ? "rotate-180" : ""
                       }`}
+                      style={{ color: '#9e9e9e' }}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -272,7 +289,7 @@ export default function AuditLogsPage() {
 
                   {/* Expanded details */}
                   {isExpanded && (
-                    <div className="mt-4 ml-6.5 pl-4 border-l-2 border-purple-500/20 space-y-2">
+                    <div className="mt-4 ml-6.5 pl-4 space-y-2" style={{ borderLeft: '2px solid rgba(212,168,67,0.2)' }}>
                       <DetailRow label="Timestamp" value={new Date(event.timestamp).toLocaleString()} />
                       <DetailRow label="Actor" value={event.actor} />
                       <DetailRow label="IP Address" value={event.ip} />
@@ -294,11 +311,18 @@ export default function AuditLogsPage() {
 // ── Subcomponents ─────────────────────────────────────────────────────────
 
 /** Summary card showing a single stat */
-function SummaryCard({ label, value, gradient }: { label: string; value: string; gradient: string }) {
+function SummaryCard({ label, value, colorIndex }: { label: string; value: string; colorIndex: number }) {
   return (
-    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-5">
-      <p className="text-purple-300/50 text-xs font-semibold uppercase tracking-wider mb-1">{label}</p>
-      <p className={`text-2xl font-bold bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}>
+    <div
+      className="rounded-xl p-5"
+      style={{
+        background: '#ffffff',
+        border: '1px solid rgba(0,0,0,0.06)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      }}
+    >
+      <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: '#9e9e9e' }}>{label}</p>
+      <p className="text-2xl font-bold" style={{ color: summaryGradients[colorIndex].text }}>
         {value}
       </p>
     </div>
@@ -310,11 +334,12 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border ${
-        active
-          ? "bg-purple-500/20 text-purple-300 border-purple-500/30 shadow-sm shadow-purple-500/10"
-          : "bg-white/5 text-purple-300/50 border-white/10 hover:bg-white/10 hover:text-purple-300"
-      }`}
+      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
+      style={{
+        background: active ? 'rgba(212,168,67,0.1)' : 'rgba(0,0,0,0.03)',
+        color: active ? '#b8922e' : '#6b6b6b',
+        border: active ? '1px solid rgba(212,168,67,0.2)' : '1px solid rgba(0,0,0,0.06)',
+      }}
     >
       {label}
     </button>
@@ -325,10 +350,10 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex gap-4">
-      <span className="text-xs text-purple-300/40 font-semibold uppercase tracking-wider w-24 flex-shrink-0">
+      <span className="text-xs font-semibold uppercase tracking-wider w-24 flex-shrink-0" style={{ color: '#9e9e9e' }}>
         {label}
       </span>
-      <span className="text-xs text-purple-200/70 font-mono">{value}</span>
+      <span className="text-xs font-mono" style={{ color: '#4b4b4b' }}>{value}</span>
     </div>
   );
 }

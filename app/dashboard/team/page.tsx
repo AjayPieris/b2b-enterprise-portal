@@ -49,7 +49,10 @@ function TeamContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-10 h-10 border-4 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+        <div
+          className="w-10 h-10 border-4 rounded-full animate-spin"
+          style={{ borderColor: 'rgba(212,168,67,0.2)', borderTopColor: '#d4a843' }}
+        />
       </div>
     );
   }
@@ -58,68 +61,105 @@ function TeamContent() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Team Management</h1>
-          <p className="text-purple-300/50 text-sm mt-1">
+          <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>Team Management</h1>
+          <p className="text-sm mt-1" style={{ color: '#9e9e9e' }}>
             Manage your organization members — Admin access only
           </p>
         </div>
-        <span className="px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30">
+        <span
+          className="px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider"
+          style={{
+            background: 'rgba(212,168,67,0.1)',
+            color: '#b8922e',
+            border: '1px solid rgba(212,168,67,0.2)',
+          }}
+        >
           🔒 Admin Only
         </span>
       </div>
 
       {errorMsg && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm font-medium">
+        <div
+          className="p-4 rounded-xl text-sm font-medium"
+          style={{
+            background: 'rgba(220,38,38,0.06)',
+            border: '1px solid rgba(220,38,38,0.15)',
+            color: '#dc2626',
+          }}
+        >
           {errorMsg}
         </div>
       )}
 
       {/* Team table */}
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden">
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{
+          background: '#ffffff',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}
+      >
         <table className="w-full">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="text-left px-6 py-4 text-purple-300/60 text-xs font-semibold uppercase tracking-wider">Member</th>
-              <th className="text-left px-6 py-4 text-purple-300/60 text-xs font-semibold uppercase tracking-wider">Role</th>
-              <th className="text-left px-6 py-4 text-purple-300/60 text-xs font-semibold uppercase tracking-wider">Status</th>
-              <th className="text-left px-6 py-4 text-purple-300/60 text-xs font-semibold uppercase tracking-wider">Joined</th>
+            <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+              <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#9e9e9e' }}>Member</th>
+              <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#9e9e9e' }}>Role</th>
+              <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#9e9e9e' }}>Status</th>
+              <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#9e9e9e' }}>Joined</th>
             </tr>
           </thead>
           <tbody>
             {members.map((member) => (
               <tr
                 key={member.id}
-                className="border-b border-white/5 hover:bg-white/[0.03] transition-colors"
+                className="transition-colors"
+                style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                      style={{
+                        background: 'linear-gradient(135deg, #d4a843, #b8922e)',
+                        boxShadow: '0 2px 6px rgba(212, 168, 67, 0.25)',
+                      }}
+                    >
                       {member.name.split(" ").map((n) => n[0]).join("")}
                     </div>
                     <div>
-                      <p className="text-white text-sm font-medium">{member.name}</p>
-                      <p className="text-purple-300/50 text-xs">{member.email}</p>
+                      <p className="text-sm font-medium" style={{ color: '#1a1a1a' }}>{member.name}</p>
+                      <p className="text-xs" style={{ color: '#9e9e9e' }}>{member.email}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${
-                    member.role === "Admin"
-                      ? "bg-amber-500/15 text-amber-400 border-amber-500/20"
-                      : "bg-purple-500/10 text-purple-300 border-purple-500/20"
-                  }`}>
+                  <span
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium"
+                    style={{
+                      background: member.role === "Admin" ? 'rgba(212,168,67,0.1)' : 'rgba(0,0,0,0.04)',
+                      color: member.role === "Admin" ? '#b8922e' : '#6b6b6b',
+                      border: `1px solid ${member.role === "Admin" ? 'rgba(212,168,67,0.2)' : 'rgba(0,0,0,0.08)'}`,
+                    }}
+                  >
                     {member.role}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${
-                      member.status === "Active" ? "bg-emerald-400" : "bg-yellow-400"
-                    }`} />
-                    <span className="text-sm text-purple-200/70">{member.status}</span>
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{
+                        background: member.status === "Active" ? '#16a34a' : '#d4a843',
+                        boxShadow: member.status === "Active"
+                          ? '0 0 6px rgba(22,163,106,0.4)'
+                          : '0 0 6px rgba(212,168,67,0.4)',
+                      }}
+                    />
+                    <span className="text-sm" style={{ color: '#4b4b4b' }}>{member.status}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-purple-300/50">
+                <td className="px-6 py-4 text-sm" style={{ color: '#9e9e9e' }}>
                   {member.joinedAt}
                 </td>
               </tr>
