@@ -32,21 +32,41 @@
   <tr>
     <td width="50%">
       <img src="public/Readme Images/1.png" alt="Landing Page" />
-      <p align="center"><strong>Landing Page</strong> — Enterprise SSO gateway with Asgardeo authentication</p>
+      <p align="center"><strong>🏠 Landing Page</strong><br/>Enterprise SSO gateway with Asgardeo authentication</p>
+    </td>
+    <td width="50%">
+      <img src="public/Readme Images/2.0.png" alt="Asgardeo Sign In" />
+      <p align="center"><strong>🔐 Asgardeo SSO</strong><br/>OAuth 2.0 + PKCE hosted login page</p>
+    </td>
+  </tr>
+</table>
+
+### 👑 Admin Flow
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="public/Readme Images/3.png" alt="Admin Login" />
+      <p align="center"><strong>Admin Login</strong><br/>Admin credentials entered via Asgardeo SSO</p>
     </td>
     <td width="50%">
       <img src="public/Readme Images/4.png" alt="Admin Dashboard" />
-      <p align="center"><strong>Admin Dashboard</strong> — Real-time metrics, revenue charts, and tenant overview</p>
+      <p align="center"><strong>Admin Dashboard</strong><br/>Full access — metrics, revenue, team, settings, API gateway</p>
     </td>
   </tr>
+</table>
+
+### 👤 Member Flow
+
+<table>
   <tr>
     <td width="50%">
-      <img src="public/Readme Images/2.0.png" alt="Asgardeo Sign In" />
-      <p align="center"><strong>Asgardeo SSO</strong> — OAuth 2.0 + PKCE authentication flow</p>
+      <img src="public/Readme Images/5.png" alt="Member Login" />
+      <p align="center"><strong>Member Login</strong><br/>Member credentials entered via Asgardeo SSO</p>
     </td>
     <td width="50%">
       <img src="public/Readme Images/6.png" alt="Member Dashboard" />
-      <p align="center"><strong>Member View</strong> — Role-based access with restricted sidebar</p>
+      <p align="center"><strong>Member Dashboard</strong><br/>Restricted view — no Team, Settings, or API Gateway access</p>
     </td>
   </tr>
 </table>
@@ -97,32 +117,7 @@ Instead of building authentication from scratch (insecure, expensive, slow), the
   <img src="public/Readme Images/architecture.png" alt="Architecture Diagram" width="100%" />
 </p>
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Browser (Next.js Client)                     │
-│                                                                   │
-│   Login Page  ─  Dashboard  ─  Team Mgmt  ─  Audit Logs         │
-│       │              │             │              │               │
-└───────┼──────────────┼─────────────┼──────────────┼───────────────┘
-        │  OAuth 2.0   │  Bearer     │  Bearer      │  Bearer
-        ▼              ▼  Token      ▼  Token       ▼  Token
-┌─────────────────────────────────────────────────────────────────┐
-│                   Next.js API Routes (Server)                     │
-│                                                                   │
-│   /api/auth   /api/admin-data   /api/team   /api/webhooks/       │
-│   (validate)  (dashboard)       (SCIM)      asgardeo (receiver)  │
-│       │              │             │              │               │
-│       └──────────────┴─────────────┴──────────────┘               │
-│                    M2M Client Credentials                         │
-└─────────────────────────────────────────────────────────────────┘
-        │  JWKS /       │  SCIM 2.0      │  Webhook
-        ▼  UserInfo     ▼  API           ▼  Events
-┌─────────────────────────────────────────────────────────────────┐
-│                     WSO2 Asgardeo Cloud                           │
-│                                                                   │
-│   OAuth /token  ─  SCIM /Users  ─  Webhook Delivery  ─  JWKS    │
-└─────────────────────────────────────────────────────────────────┘
-```
+> **How it works:** The browser authenticates via OAuth 2.0 and sends Bearer tokens to Next.js API routes. The server validates tokens using Asgardeo's JWKS endpoint, calls SCIM 2.0 APIs with M2M credentials for user management, and receives real-time webhook events signed with HMAC-SHA256.
 
 ---
 
