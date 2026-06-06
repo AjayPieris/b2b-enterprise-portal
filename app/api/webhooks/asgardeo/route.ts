@@ -13,148 +13,74 @@ function verifySignature(rawBody: string, signatureHeader: string): boolean {
     return true;
   }
 
-  const expected = `sha256=${createHmac("sha256", WEBHOOK_SECRET).update(rawBody).digest("hex")}`;
+  const expectedSignature = `sha256=${createHmac("sha256", WEBHOOK_SECRET).update(rawBody).digest("hex")}`;
 
   try {
-    return timingSafeEqual(Buffer.from(expected), Buffer.from(signatureHeader));
+    return timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signatureHeader));
   } catch {
     return false;
   }
 }
 
+// Safely extract a user identifier from an event entity (initiator or subject)
+const extractUser = (entity?: any, fallback = "unknown") => 
+  entity?.claims?.["http://wso2.org/claims/username"] ||
+  entity?.claims?.["http://wso2.org/claims/emailaddress"] ||
+  entity?.ref ||
+  fallback;
+
 function mapAsgardeoEvent(payload: AsgardeoWebhookPayload): AuditEvent | null {
   const { event } = payload;
   if (!event) return null;
 
-  const actor =
-    event.initiator?.claims?.["http://wso2.org/claims/username"] ||
-    event.initiator?.claims?.["http://wso2.org/claims/emailaddress"] ||
-    event.initiator?.ref ||
-    "unknown";
-
+  const actor = extractUser(event.initiator, "unknown");
   const ip = event.context?.remoteAddress || "unknown";
   const userAgent = event.context?.userAgent || "Asgardeo";
-  const ts = new Date(event.timestamp || Date.now()).toISOString();
+  const timestamp = new Date(event.timestamp || Date.now()).toISOString();
   const id = `asgardeo_${event.ref || Date.now()}`;
+  const eventType = event.type || "";
 
-  if (
-    event.type?.includes("login.failure") ||
-    event.type?.includes("authentication.fail")
-  ) {
-    return {
-      id,
-      timestamp: ts,
-      type: "auth",
-      severity: "warning",
-      action: "user.login.failed",
-      actor,
-      ip,
-      userAgent,
-      details: `Login failed for ${actor}. Reason: ${event.context?.failureReason || "invalid credentials"}.`,
-    };
+  // Helper to DRY up the event creation logic
+  const createEvent = (
+    type: AuditEvent["type"], 
+    severity: AuditEvent["severity"], 
+    action: string, 
+    details: string
+  ): AuditEvent => ({
+    id, timestamp, type, severity, action, actor, ip, userAgent, details
+  });
+
+  if (eventType.includes("login.failure") || eventType.includes("authentication.fail")) {
+    const reason = event.context?.failureReason || "invalid credentials";
+    return createEvent("auth", "warning", "user.login.failed", `Login failed for ${actor}. Reason: ${reason}.`);
   }
 
-  if (
-    event.type?.includes("login.success") ||
-    event.type?.includes("authentication.success")
-  ) {
-    return {
-      id,
-      timestamp: ts,
-      type: "auth",
-      severity: "info",
-      action: "user.login.success",
-      actor,
-      ip,
-      userAgent,
-      details: `${actor} authenticated successfully via Asgardeo.`,
-    };
+  if (eventType.includes("login.success") || eventType.includes("authentication.success")) {
+    return createEvent("auth", "info", "user.login.success", `${actor} authenticated successfully via Asgardeo.`);
   }
 
-  if (event.type?.includes("user.delete") || event.type?.includes("USER_DELETE")) {
-    const deletedUser =
-      event.subject?.claims?.["http://wso2.org/claims/username"] ||
-      event.subject?.ref ||
-      "unknown user";
-    return {
-      id,
-      timestamp: ts,
-      type: "admin",
-      severity: "critical",
-      action: "user.deleted",
-      actor,
-      ip,
-      userAgent,
-      details: `User ${deletedUser} was permanently deleted by ${actor}.`,
-    };
+  if (eventType.includes("user.delete") || eventType.includes("USER_DELETE")) {
+    const targetUser = extractUser(event.subject, "unknown user");
+    return createEvent("admin", "critical", "user.deleted", `User ${targetUser} was permanently deleted by ${actor}.`);
   }
 
-  if (
-    event.type?.includes("role.update") ||
-    event.type?.includes("group.update") ||
-    event.type?.includes("ROLE_UPDATE")
-  ) {
-    const target =
-      event.subject?.claims?.["http://wso2.org/claims/username"] ||
-      event.subject?.ref ||
-      "unknown user";
+  if (eventType.includes("role.update") || eventType.includes("group.update") || eventType.includes("ROLE_UPDATE")) {
+    const targetUser = extractUser(event.subject, "unknown user");
     const newRole = event.context?.role || "unknown role";
-    return {
-      id,
-      timestamp: ts,
-      type: "admin",
-      severity: "warning",
-      action: "user.role.updated",
-      actor,
-      ip,
-      userAgent,
-      details: `${actor} updated role of ${target} to ${newRole}.`,
-    };
+    return createEvent("admin", "warning", "user.role.updated", `${actor} updated role of ${targetUser} to ${newRole}.`);
   }
 
-  if (event.type?.includes("user.create") || event.type?.includes("REGISTRATION")) {
-    const newUser =
-      event.subject?.claims?.["http://wso2.org/claims/username"] ||
-      event.subject?.ref ||
-      "new user";
-    return {
-      id,
-      timestamp: ts,
-      type: "admin",
-      severity: "info",
-      action: "user.created",
-      actor,
-      ip,
-      userAgent,
-      details: `New user ${newUser} was provisioned in Asgardeo.`,
-    };
+  if (eventType.includes("user.create") || eventType.includes("REGISTRATION")) {
+    const newUser = extractUser(event.subject, "new user");
+    return createEvent("admin", "info", "user.created", `New user ${newUser} was provisioned in Asgardeo.`);
   }
 
-  if (event.type?.includes("password.update") || event.type?.includes("PASSWORD_UPDATE")) {
-    return {
-      id,
-      timestamp: ts,
-      type: "security",
-      severity: "warning",
-      action: "user.password.changed",
-      actor,
-      ip,
-      userAgent,
-      details: `${actor} changed their password.`,
-    };
+  if (eventType.includes("password.update") || eventType.includes("PASSWORD_UPDATE")) {
+    return createEvent("security", "warning", "user.password.changed", `${actor} changed their password.`);
   }
 
-  return {
-    id,
-    timestamp: ts,
-    type: "system",
-    severity: "info",
-    action: `asgardeo.${event.type || "unknown"}`,
-    actor,
-    ip,
-    userAgent,
-    details: `Unrecognised Asgardeo event: ${event.type}`,
-  };
+  // Fallback for unhandled event types
+  return createEvent("system", "info", `asgardeo.${eventType || "unknown"}`, `Unrecognised Asgardeo event: ${eventType}`);
 }
 
 interface AsgardeoWebhookPayload {
@@ -164,16 +90,8 @@ interface AsgardeoWebhookPayload {
     ref?: string;
     type?: string;
     timestamp?: number;
-    initiator?: {
-      ref?: string;
-      type?: string;
-      claims?: Record<string, string>;
-    };
-    subject?: {
-      ref?: string;
-      type?: string;
-      claims?: Record<string, string>;
-    };
+    initiator?: any;
+    subject?: any;
     context?: {
       remoteAddress?: string;
       userAgent?: string;
@@ -193,27 +111,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  let payload: AsgardeoWebhookPayload;
   try {
-    payload = JSON.parse(rawBody);
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    const payload: AsgardeoWebhookPayload = JSON.parse(rawBody);
+    console.log(`[Webhook] Received event: ${payload.event?.type} from org: ${payload.organizationName}`);
+
+    const auditEvent = mapAsgardeoEvent(payload);
+    if (!auditEvent) {
+      return NextResponse.json({ status: "ignored", reason: "no event field in payload" });
+    }
+
+    globalAuditLogs.push(auditEvent);
+    
+    // Evaluate alert rules based on the new event
+    const triggered = evaluateRules(auditEvent, globalAuditLogs);
+    triggered.forEach(addAlert);
+
+    return NextResponse.json({
+      status: "ok",
+      eventProcessed: auditEvent.action,
+      alertsTriggered: triggered.length,
+    });
+    
+  } catch (error) {
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
-
-  console.log(`[Webhook] Received event: ${payload.event?.type} from org: ${payload.organizationName}`);
-
-  const auditEvent = mapAsgardeoEvent(payload);
-  if (!auditEvent) {
-    return NextResponse.json({ status: "ignored", reason: "no event field in payload" });
-  }
-
-  globalAuditLogs.push(auditEvent);
-  const triggered = evaluateRules(auditEvent, globalAuditLogs);
-  triggered.forEach(addAlert);
-
-  return NextResponse.json({
-    status: "ok",
-    eventProcessed: auditEvent.action,
-    alertsTriggered: triggered.length,
-  });
 }
