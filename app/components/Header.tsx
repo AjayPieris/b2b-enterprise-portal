@@ -73,11 +73,11 @@ export default function Header() {
   }, [getAccessToken]);
 
   useEffect(() => {
-    if (!state.isAuthenticated) return;
+    if (!state.isAuthenticated || !isAdmin) return;
     fetchAlerts();
     const interval = setInterval(fetchAlerts, 10000);
     return () => clearInterval(interval);
-  }, [state.isAuthenticated, fetchAlerts]);
+  }, [state.isAuthenticated, isAdmin, fetchAlerts]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -288,7 +288,8 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Alerts Center */}
+        {/* Alerts Center — only visible to admins */}
+        {isAdmin && (
         <div className="relative" ref={panelRef}>
           <button
             id="notification-bell-btn"
@@ -388,6 +389,7 @@ export default function Header() {
             </div>
           )}
         </div>
+        )}
 
         {/* Identity Role */}
         <span

@@ -51,7 +51,7 @@
     </td>
     <td width="50%">
       <img src="public/Readme Images/4.png" alt="Admin Dashboard" />
-      <p align="center"><strong>Admin Dashboard</strong><br/>Full access — metrics, revenue, team, settings, API gateway</p>
+      <p align="center"><strong>Admin Dashboard</strong><br/>Full access — metrics, revenue, team, settings, API gateway, alert bell</p>
     </td>
   </tr>
 </table>
@@ -66,7 +66,7 @@
     </td>
     <td width="50%">
       <img src="public/Readme Images/6.png" alt="Member Dashboard" />
-      <p align="center"><strong>Member Dashboard</strong><br/>Restricted view — no Team, Settings, or API Gateway access</p>
+      <p align="center"><strong>Member Dashboard</strong><br/>Restricted view — no Team, Settings, API Gateway, or alert bell</p>
     </td>
   </tr>
 </table>
@@ -103,7 +103,7 @@ Instead of building authentication from scratch (insecure, expensive, slow), the
 | **SCIM 2.0 User Management** | Full CRUD on users via Machine-to-Machine client credentials | ✅ Live |
 | **Real-Time Webhooks** | HMAC-SHA256 verified webhook receiver for Asgardeo events | ✅ Live |
 | **Security Rules Engine** | SIEM-style automated alert rules (brute force, privilege escalation, etc.) | ✅ Live |
-| **Admin Alert Bell** | Actionable notifications with inline SCIM operations (delete/unlock user) | ✅ Live |
+| **Admin Alert Bell** | Admin-only notification bell with inline SCIM actions (delete/unlock user) | ✅ Live |
 | **Compliance Audit Logs** | Filterable, immutable event trail with full metadata | ✅ Live |
 | **Role-Based Access (RBAC)** | Admin vs Member views driven by Asgardeo token claims | ✅ Live |
 | **Multi-Tenant Dashboard** | Revenue, organizations, API metrics across all tenants | ✅ Live |
@@ -212,14 +212,18 @@ A server-side rules engine evaluates every incoming event against configurable s
 
 ---
 
-### 6. Admin Alert Bell with Live SCIM Actions
+### 6. Admin-Only Alert Bell with Live SCIM Actions
+
+The notification bell is **only visible to Admin users**. Members see a clean header with no alerts — security operations are an admin responsibility.
 
 ```
-Bell icon shows red badge (9)
+Admin logs in → Bell icon appears with red badge (9)
   → Admin opens notification panel
   → Sees: "Login Failure — john@company.com from IP 192.168.1.42"
   → Clicks [Delete User] → SCIM DELETE → User removed from Asgardeo
   → OR clicks [Allow Login] → SCIM PATCH active:true → Account unlocked
+
+Member logs in → No bell icon, no alert polling, clean header
 ```
 
 📁 `app/components/Header.tsx` · `app/api/admin/user-action/route.ts`
@@ -230,10 +234,10 @@ Bell icon shows red badge (9)
 
 Portal reads group/role claims from the Asgardeo token to enforce access.
 
-| Role | Sidebar Access | Alert Actions |
-|:-----|:--------------|:-------------|
-| **Admin** | Full dashboard + Team + Settings + API Gateway | ✅ Delete / Allow |
-| **Member** | Dashboard + Analytics + Audit Logs + Profile | ❌ Read-only |
+| Role | Sidebar Access | Alert Bell | Alert Actions |
+|:-----|:--------------|:-----------|:-------------|
+| **Admin** | Full dashboard + Team + Settings + API Gateway | ✅ Visible | ✅ Delete / Allow |
+| **Member** | Dashboard + Analytics + Audit Logs + Profile | ❌ Hidden | ❌ None |
 
 📁 `app/components/AuthGuard.tsx` · `app/components/Sidebar.tsx`
 
@@ -335,7 +339,7 @@ b2b-enterprise-portal/
 │   │   ├── AsgardeoProvider.tsx          ← OAuth 2.0 context provider
 │   │   ├── AuthGuard.tsx                 ← Route protection + RBAC
 │   │   ├── ClientProviders.tsx           ← Client-side provider wrapper
-│   │   ├── Header.tsx                    ← Notification bell + admin actions
+│   │   ├── Header.tsx                    ← Admin-only notification bell + SCIM actions
 │   │   ├── Sidebar.tsx                   ← Role-aware navigation
 │   │   └── StatsCard.tsx                 ← Reusable metrics card
 │   │
