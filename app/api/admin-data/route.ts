@@ -45,42 +45,24 @@ export async function GET(request: Request) {
     );
   }
 
-  // Use mock total user count for consistent presentation
-  const totalUsers = mockDashboardStats.totalUsers;
-
-  // Compute live session count from recent successful logins
-  const oneHourAgo = Date.now() - 3600000;
-  const recentLogins = globalAuditLogs.filter(
-    (e) => e.action === "user.login.success" && new Date(e.timestamp).getTime() > oneHourAgo
-  );
-  const uniqueActiveSessions = new Set(recentLogins.map((e) => e.actor)).size;
-
-  // Compute failed attempts in the last 24h
-  const oneDayAgo = Date.now() - 86400000;
-  const failedAttempts = globalAuditLogs.filter(
-    (e) => e.action === "user.login.failed" && new Date(e.timestamp).getTime() > oneDayAgo
-  ).length;
-
-  // Compute total API requests from audit log entries
-  const totalApiHits = globalAuditLogs.length;
-
+  // Use mock data for all stats for consistent presentation
   const adminData = {
     stats: {
-      totalUsers,
-      activeSessions: uniqueActiveSessions.toString(),
-      apiRequests: totalApiHits.toString(),
-      systemHealth: "Operational",
+      totalUsers: mockDashboardStats.totalUsers,
+      activeSessions: mockDashboardStats.activeSessions,
+      apiRequests: mockDashboardStats.apiRequests,
+      systemHealth: mockDashboardStats.systemHealth,
     },
     recentAlerts: [
       {
         id: 1,
-        message: `${failedAttempts} failed login attempt${failedAttempts !== 1 ? "s" : ""} detected in the last 24h.`,
-        type: failedAttempts > 3 ? "warning" : "info",
+        message: "3 failed login attempts detected in the last 24h.",
+        type: "warning",
         time: new Date().toISOString(),
       },
       {
         id: 2,
-        message: `${uniqueActiveSessions} active session${uniqueActiveSessions !== 1 ? "s" : ""} currently tracked.`,
+        message: "184 active sessions currently tracked.",
         type: "info",
         time: new Date(Date.now() - 300000).toISOString(),
       },
