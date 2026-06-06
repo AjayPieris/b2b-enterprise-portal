@@ -8,82 +8,99 @@ import type { AuditEvent } from "../../lib/auditTypes";
 export const globalAuditLogs: AuditEvent[] = [];
 
 // Seed realistic data on first server boot so the dashboard isn't empty
-let seeded = false;
-function ensureSeeded() {
-  if (seeded) return;
-  seeded = true;
+let isSeeded = false;
 
-  const seedEvents = generateSeedAuditEvents();
-  globalAuditLogs.push(...seedEvents);
-  seedAlerts(seedEvents);
+function ensureSeeded() {
+  if (isSeeded) return;
+  
+  const initialEvents = generateSeedAuditEvents();
+  globalAuditLogs.push(...initialEvents);
+  seedAlerts(initialEvents);
+  
+  isSeeded = true;
 }
 
-function pushEvent(event: AuditEvent) {
+function recordEvent(event: AuditEvent) {
   globalAuditLogs.push(event);
-  const triggered = evaluateRules(event, globalAuditLogs);
-  triggered.forEach(addAlert);
+  
+  const triggeredAlerts = evaluateRules(event, globalAuditLogs);
+  triggeredAlerts.forEach(addAlert);
 }
 
 export async function GET(request: Request) {
   ensureSeeded();
 
-  const result = await validateToken(request);
-
-  if (!result.valid) {
+  const authResult = await validateToken(request);
+  if (!authResult.valid) {
     return NextResponse.json(
-      { error: `Unauthorized: ${result.error}` },
+      { error: `Unauthorized: ${authResult.error}` },
       { status: 401 }
     );
   }
 
-  const url = new URL(request.url);
-  const typeFilter = url.searchParams.get("type");
-  const severityFilter = url.searchParams.get("severity");
-  const limit = parseInt(url.searchParams.get("limit") || "50", 10);
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get("type");
+  const severity = searchParams.get("severity");
+  const limit = parseInt(searchParams.get("limit") || "50", 10);
+  const userId = authResult.token?.sub || authResult.token?.email || "Admin";
 
-  pushEvent({
+  // Log this access event
+  recordEvent({
     id: `evt_${Date.now()}`,
     timestamp: new Date().toISOString(),
     type: "admin",
     severity: "info",
     action: "audit_logs.accessed",
-    actor: result.token.sub || result.token.email || "Admin",
+    actor: userId,
     ip: request.headers.get("x-forwarded-for") || "127.0.0.1",
     userAgent: request.headers.get("user-agent") || "Unknown",
-    details: `User viewed audit logs with filters: type=${typeFilter}, severity=${severityFilter}`,
+    details: `User viewed audit logs (filters: type=${type || 'all'}, severity=${severity || 'all'})`,
   });
 
-  let events = [...globalAuditLogs].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  // Filter and sort the logs
+  let filteredLogs = globalAuditLogs;
+  
+  if (type) {
+    filteredLogs = filteredLogs.filter(event => event.type === type);
+  }
+  
+  if (severity) {
+    filteredLogs = filteredLogs.filter(event => event.severity === severity);
+  }
+
+  const sortedLogs = [...filteredLogs]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, limit);
+
+  // Calculate summary efficiently in a single pass
+  const summary = globalAuditLogs.reduce(
+    (acc, event) => {
+      acc.total += 1;
+      
+      if (event.type in acc.byType) {
+        acc.byType[event.type as keyof typeof acc.byType] += 1;
+      }
+      
+      if (event.severity in acc.bySeverity) {
+        acc.bySeverity[event.severity as keyof typeof acc.bySeverity] += 1;
+      }
+      
+      return acc;
+    },
+    {
+      total: 0,
+      byType: { auth: 0, admin: 0, system: 0, security: 0 },
+      bySeverity: { info: 0, warning: 0, critical: 0 },
+    }
   );
-
-  if (typeFilter) events = events.filter((e) => e.type === typeFilter);
-  if (severityFilter) events = events.filter((e) => e.severity === severityFilter);
-
-  events = events.slice(0, limit);
-
-  const summary = {
-    total: globalAuditLogs.length,
-    byType: {
-      auth: globalAuditLogs.filter((e) => e.type === "auth").length,
-      admin: globalAuditLogs.filter((e) => e.type === "admin").length,
-      system: globalAuditLogs.filter((e) => e.type === "system").length,
-      security: globalAuditLogs.filter((e) => e.type === "security").length,
-    },
-    bySeverity: {
-      info: globalAuditLogs.filter((e) => e.severity === "info").length,
-      warning: globalAuditLogs.filter((e) => e.severity === "warning").length,
-      critical: globalAuditLogs.filter((e) => e.severity === "critical").length,
-    },
-  };
 
   return NextResponse.json({
     success: true,
-    data: events,
+    data: sortedLogs,
     summary,
     _meta: {
-      requestedBy: result.token.sub,
-      filters: { type: typeFilter, severity: severityFilter, limit },
+      requestedBy: userId,
+      filters: { type, severity, limit },
       validatedAt: new Date().toISOString(),
     },
   });
