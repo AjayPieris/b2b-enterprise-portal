@@ -14,6 +14,7 @@ function ensureMockDataSeeded() {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const BASELINE_TRAFFIC = [142, 189, 234, 278, 312, 367];
 
+// Get data to show on the analytics charts
 export async function GET(request: Request) {
   ensureMockDataSeeded();
 

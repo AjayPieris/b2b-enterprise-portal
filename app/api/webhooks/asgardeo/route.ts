@@ -102,6 +102,7 @@ interface AsgardeoWebhookPayload {
   };
 }
 
+// Receive messages (webhooks) from the Identity Provider
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-hub-signature-256") || "";

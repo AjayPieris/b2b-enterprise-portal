@@ -71,6 +71,7 @@ function mapScimUserToDisplayUser(user: ScimUser) {
   };
 }
 
+// Get the list of all team members
 export async function GET(request: Request) {
   try {
     const authResult = await validateToken(request);

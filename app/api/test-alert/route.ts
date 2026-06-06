@@ -79,6 +79,7 @@ const SCENARIOS: Record<string, ScenarioGenerator> = {
   ]
 };
 
+// Create some fake alerts to test the system
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const scenarioKey = searchParams.get("scenario") || "brute_force";

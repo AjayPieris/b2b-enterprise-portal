@@ -27,6 +27,7 @@ function recordEvent(event: AuditEvent) {
   triggeredAlerts.forEach(addAlert);
 }
 
+// Get the audit logs for the dashboard
 export async function GET(request: Request) {
   ensureSeeded();
 

@@ -7,6 +7,7 @@ import {
   markAsRead,
 } from "../../lib/alertStore";
 
+// Get all the alerts and how many are unread
 export async function GET(request: Request) {
   const authResult = await validateToken(request);
   
@@ -23,6 +24,7 @@ export async function GET(request: Request) {
   });
 }
 
+// Mark an alert (or all of them) as read
 export async function PATCH(request: Request) {
   const authResult = await validateToken(request);
   
