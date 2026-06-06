@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { validateToken } from "../../lib/auth";
 import { globalAuditLogs } from "../audit-logs/route";
 import { generateSeedAuditEvents, seedAlerts } from "../../lib/mockSeed";
+import { mockDashboardStats } from "../../lib/mockData";
 
 const ASGARDEO_BASE_URL = process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL || "";
 const M2M_CLIENT_ID = process.env.ASGARDEO_M2M_CLIENT_ID || "";
@@ -44,20 +45,8 @@ export async function GET(request: Request) {
     );
   }
 
-  // Pull real user count from SCIM2
-  let totalUsers = "0";
-  try {
-    const adminToken = await getM2MAccessToken();
-    const scimResponse = await fetch(`${ASGARDEO_BASE_URL}/scim2/Users?count=1`, {
-      headers: { Authorization: `Bearer ${adminToken}` },
-    });
-    if (scimResponse.ok) {
-      const scimData = await scimResponse.json();
-      totalUsers = scimData.totalResults?.toString() || "0";
-    }
-  } catch (e) {
-    console.error("[Admin Data] Failed to fetch user count:", e);
-  }
+  // Use mock total user count for consistent presentation
+  const totalUsers = mockDashboardStats.totalUsers;
 
   // Compute live session count from recent successful logins
   const oneHourAgo = Date.now() - 3600000;
