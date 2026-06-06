@@ -3,7 +3,7 @@ import { validateToken } from "../../lib/auth";
 import { globalAuditLogs } from "../audit-logs/route";
 import { generateSeedAuditEvents, seedAlerts } from "../../lib/mockSeed";
 
-function ensureSeeded() {
+function ensureMockDataSeeded() {
   if (globalAuditLogs.length === 0) {
     const seedEvents = generateSeedAuditEvents();
     globalAuditLogs.push(...seedEvents);
@@ -11,64 +11,71 @@ function ensureSeeded() {
   }
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const BASELINE_TRAFFIC = [142, 189, 234, 278, 312, 367];
+
 export async function GET(request: Request) {
-  ensureSeeded();
+  ensureMockDataSeeded();
 
-  const result = await validateToken(request);
-
-  if (!result.valid) {
+  const authResult = await validateToken(request);
+  if (!authResult.valid) {
     return NextResponse.json(
-      { error: `Unauthorized: ${result.error}` },
+      { error: `Unauthorized: ${authResult.error}` },
       { status: 401 }
     );
   }
 
-  const authEvents = globalAuditLogs.filter((log) => log.type === "auth");
-  const successLogins = authEvents.filter((log) => log.action === "user.login.success");
-  const failedLogins = authEvents.filter((log) => log.action === "user.login.failed");
-  const uniqueUsers = new Set(authEvents.map((log) => log.actor)).size;
+  // Pre-calculate metrics to avoid multiple passes
+  const metrics = globalAuditLogs.reduce(
+    (acc, log) => {
+      if (log.type === "auth") {
+        acc.uniqueUsers.add(log.actor);
+        if (log.action === "user.login.success") acc.successCount++;
+        if (log.action === "user.login.failed") acc.failureCount++;
+      }
+      return acc;
+    },
+    { successCount: 0, failureCount: 0, uniqueUsers: new Set<string>() }
+  );
 
-  // Realistic monthly breakdown — real traffic mixed with historical baseline
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const currentMonthIdx = new Date().getMonth();
 
-  const monthlyLogins = months.slice(0, 6).map((month, i) => {
-    // Create a realistic growth curve for the last 6 months
-    const baselineTraffic = [142, 189, 234, 278, 312, 367];
+  // Generate the last 6 months of data, blending real current-month stats with historical baselines
+  const monthlyLogins = Array.from({ length: 6 }).map((_, i) => {
     const monthIdx = (currentMonthIdx - 5 + i + 12) % 12;
-    const realMonth = months[monthIdx];
-
-    // If it's the current month, factor in real event count
     const isCurrentMonth = monthIdx === currentMonthIdx;
-    const count = isCurrentMonth
-      ? baselineTraffic[i] + successLogins.length
-      : baselineTraffic[i] + Math.floor(Math.random() * 20);
+    
+    // Add some random noise to historical data for realism, but use actual counts for the current month
+    const baseline = BASELINE_TRAFFIC[i] || 100;
+    const jitter = isCurrentMonth ? 0 : Math.floor(Math.random() * 20);
+    const count = baseline + jitter + (isCurrentMonth ? metrics.successCount : 0);
 
-    return { month: realMonth, count };
+    return { 
+      month: MONTHS[monthIdx], 
+      count 
+    };
   });
-
-  const analyticsData = {
-    monthlyLogins,
-    authMethods: [
-      { method: "Password + TOTP", percentage: 48 },
-      { method: "Google Workspace SSO", percentage: 27 },
-      { method: "Microsoft Entra ID", percentage: 14 },
-      { method: "Passkey (WebAuthn)", percentage: 8 },
-      { method: "Magic Link", percentage: 3 },
-    ],
-    summary: {
-      totalLogins: (successLogins.length + 347).toString(),
-      avgSessionTime: "24m 18s",
-      failedAttempts: failedLogins.length.toString(),
-      mfaAdoption: uniqueUsers > 0 ? "94%" : "0%",
-    },
-  };
 
   return NextResponse.json({
     success: true,
-    data: analyticsData,
+    data: {
+      monthlyLogins,
+      authMethods: [
+        { method: "Password + TOTP", percentage: 48 },
+        { method: "Google Workspace SSO", percentage: 27 },
+        { method: "Microsoft Entra ID", percentage: 14 },
+        { method: "Passkey (WebAuthn)", percentage: 8 },
+        { method: "Magic Link", percentage: 3 },
+      ],
+      summary: {
+        totalLogins: (metrics.successCount + 347).toString(),
+        avgSessionTime: "24m 18s",
+        failedAttempts: metrics.failureCount.toString(),
+        mfaAdoption: metrics.uniqueUsers.size > 0 ? "94%" : "0%",
+      },
+    },
     _meta: {
-      requestedBy: result.token.sub,
+      requestedBy: authResult.token?.sub || 'Unknown',
       validatedAt: new Date().toISOString(),
     },
   });

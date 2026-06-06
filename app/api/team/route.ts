@@ -18,46 +18,70 @@ interface ScimUser {
   meta?: { created?: string };
 }
 
-// Gets a server-side admin token using the M2M Client Credentials flow.
-// This is separate from the user's SPA token — it runs only on the server.
-async function getM2MAccessToken(): Promise<string> {
-  const tokenUrl = `${ASGARDEO_BASE_URL}/oauth2/token`;
+async function getAdminToken(): Promise<string> {
   const credentials = Buffer.from(`${M2M_CLIENT_ID}:${M2M_CLIENT_SECRET}`).toString("base64");
 
-  const response = await fetch(tokenUrl, {
+  const response = await fetch(`${ASGARDEO_BASE_URL}/oauth2/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       Authorization: `Basic ${credentials}`,
     },
-    body: "grant_type=client_credentials&scope=internal_user_mgt_list internal_user_mgt_view",
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      scope: "internal_user_mgt_list internal_user_mgt_view"
+    }),
   });
 
   if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`M2M token request failed (${response.status}): ${err}`);
+    throw new Error(`Failed to retrieve M2M token: ${response.statusText}`);
   }
 
-  const data = await response.json();
-  return data.access_token;
+  const { access_token } = await response.json();
+  return access_token;
+}
+
+function mapScimUserToDisplayUser(user: ScimUser) {
+  const email = 
+    user.emails?.find((e) => e.primary)?.value || 
+    user.emails?.[0]?.value || 
+    user.userName;
+
+  const nameParts = [user.name?.givenName, user.name?.familyName].filter(Boolean);
+  const displayName = 
+    user.name?.formatted || 
+    (nameParts.length ? nameParts.join(" ") : user.userName);
+
+  const rolesAndGroups = [
+    ...(user.roles?.map(r => r.display) || []),
+    ...(user.groups?.map(g => g.display) || [])
+  ];
+  
+  const isAdmin = rolesAndGroups.some(role => role.toLowerCase().includes("admin"));
+
+  return {
+    id: user.id,
+    name: displayName,
+    email,
+    role: isAdmin ? "Admin" : "User",
+    status: user.active === false ? "Inactive" : "Active",
+    joinedAt: user.meta?.created
+      ? new Date(user.meta.created).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0],
+  };
 }
 
 export async function GET(request: Request) {
-  // 1. Verify the user making this request is authenticated (their SPA token)
-  const result = await validateToken(request);
-
-  if (!result.valid) {
-    return NextResponse.json(
-      { error: `Unauthorized: ${result.error}` },
-      { status: 401 }
-    );
-  }
-
   try {
-    // 2. Get a server-side admin token to call SCIM2 (not the user's browser token)
-    const adminToken = await getM2MAccessToken();
+    const authResult = await validateToken(request);
+    if (!authResult.valid) {
+      return NextResponse.json(
+        { error: `Unauthorized: ${authResult.error}` },
+        { status: 401 }
+      );
+    }
 
-    // 3. Use the admin token to fetch all org users from Asgardeo SCIM2
+    const adminToken = await getAdminToken();
     const scimResponse = await fetch(`${ASGARDEO_BASE_URL}/scim2/Users`, {
       headers: {
         Authorization: `Bearer ${adminToken}`,
@@ -65,48 +89,16 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log(`[Team API] SCIM2 response: ${scimResponse.status}`);
-
     if (!scimResponse.ok) {
-      const errBody = await scimResponse.text();
-      console.error(`[Team API] SCIM2 error:`, errBody);
+      console.error(`[Team API] SCIM2 Request failed:`, await scimResponse.text());
       return NextResponse.json(
-        { error: `Failed to fetch users from Asgardeo (${scimResponse.status}).` },
+        { error: "Failed to fetch organization users from identity provider." },
         { status: 502 }
       );
     }
 
     const scimData = await scimResponse.json();
-
-    // 4. Map the SCIM2 response into the clean format the UI expects
-    const users = (scimData.Resources as ScimUser[] || []).map((user) => {
-      const email =
-        user.emails?.find((e) => e.primary)?.value ||
-        user.emails?.[0]?.value ||
-        user.userName;
-
-      const displayName =
-        user.name?.formatted ||
-        [user.name?.givenName, user.name?.familyName].filter(Boolean).join(" ") ||
-        user.userName;
-
-      const roleLabels = [
-        ...(user.roles?.map((r) => r.display) || []),
-        ...(user.groups?.map((g) => g.display) || []),
-      ];
-      const isAdmin = roleLabels.some((r) => r.toLowerCase().includes("admin"));
-
-      return {
-        id: user.id,
-        name: displayName,
-        email,
-        role: isAdmin ? "Admin" : "User",
-        status: user.active === false ? "Inactive" : "Active",
-        joinedAt: user.meta?.created
-          ? new Date(user.meta.created).toISOString().split("T")[0]
-          : new Date().toISOString().split("T")[0],
-      };
-    });
+    const users = (scimData.Resources as ScimUser[] || []).map(mapScimUserToDisplayUser);
 
     return NextResponse.json({
       success: true,
@@ -114,14 +106,15 @@ export async function GET(request: Request) {
       data: users,
       _meta: {
         total: scimData.totalResults,
-        requestedBy: result.token.sub,
+        requestedBy: authResult.token?.sub,
         validatedAt: new Date().toISOString(),
       },
     });
+    
   } catch (error) {
-    console.error("[Team API] Error:", error);
+    console.error("[Team API] Unhandled exception:", error);
     return NextResponse.json(
-      { error: "Internal error fetching organization users." },
+      { error: "An unexpected error occurred while fetching users." },
       { status: 500 }
     );
   }

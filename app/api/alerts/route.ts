@@ -7,11 +7,14 @@ import {
   markAsRead,
 } from "../../lib/alertStore";
 
-// GET /api/alerts — returns all alerts + unread count
 export async function GET(request: Request) {
-  const result = await validateToken(request);
-  if (!result.valid) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authResult = await validateToken(request);
+  
+  if (!authResult.valid) {
+    return NextResponse.json(
+      { error: "Unauthorized" }, 
+      { status: 401 }
+    );
   }
 
   return NextResponse.json({
@@ -20,22 +23,38 @@ export async function GET(request: Request) {
   });
 }
 
-// PATCH /api/alerts — mark alerts as read
-// body: { id: string }  → mark one
-// body: { all: true }   → mark all
 export async function PATCH(request: Request) {
-  const result = await validateToken(request);
-  if (!result.valid) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authResult = await validateToken(request);
+  
+  if (!authResult.valid) {
+    return NextResponse.json(
+      { error: "Unauthorized" }, 
+      { status: 401 }
+    );
   }
 
-  const body = await request.json();
+  try {
+    const body = await request.json();
 
-  if (body.all) {
-    markAllAsRead();
-  } else if (body.id) {
-    markAsRead(body.id);
+    if (body.all) {
+      markAllAsRead();
+    } else if (body.id) {
+      markAsRead(body.id);
+    } else {
+      return NextResponse.json(
+        { error: "Invalid payload: must provide 'all' or 'id'" },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      unreadCount: getUnreadCount() 
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Invalid JSON body" },
+      { status: 400 }
+    );
   }
-
-  return NextResponse.json({ unreadCount: getUnreadCount() });
 }
