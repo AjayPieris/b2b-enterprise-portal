@@ -213,7 +213,7 @@ export default function LandingPage() {
             <button
               onClick={handleSignIn}
               disabled={isSigningIn}
-              className="w-full font-semibold py-3.5 px-8 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-white disabled:opacity-75 disabled:cursor-not-allowed"
+              className="w-full font-semibold py-3.5 px-8 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-white cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
               style={{
                 background: "linear-gradient(135deg, #d4a843, #b8922e)",
                 boxShadow: "0 4px 16px rgba(212, 168, 67, 0.3)",
@@ -225,7 +225,7 @@ export default function LandingPage() {
                   Connecting...
                 </>
               ) : (
-                "Authenticate via Asgardeo SSO"
+                "Sign In Securely"
               )}
             </button>
 
